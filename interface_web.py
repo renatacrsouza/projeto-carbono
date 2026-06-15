@@ -1,3 +1,4 @@
+Python
 #!/usr/bin/env python3
 """Interface web premium do diagnóstico de carbono - Estilo Minimalista Apple."""
 
@@ -373,6 +374,7 @@ def exibir_relatorio(respostas: dict[str, str], pdf_bytes: bytes) -> None:
 
 
 def main() -> None:
+    # 💎 AJUSTE: initial_sidebar_state como expanded garante o equilíbrio visual inicial da tela
     st.set_page_config(page_title="Carbon Diagnosis", page_icon="🌱", layout="wide", initial_sidebar_state="expanded")
     aplicar_estilo()
 
@@ -414,28 +416,24 @@ def main() -> None:
             with st.chat_message("assistant"):
                 with st.spinner("Analisando..."):
                     try:
-                        # 🔎 Tenta pegar a chave do Streamlit Cloud ou do arquivo .env local
                         api_key = st.secrets.get("GEMINI_API_KEY")
                         
                         if api_key:
-                            # Configuração oficial da biblioteca google-generativeai
                             genai.configure(api_key=api_key)
-                            model = genai.GenerativeModel("gemini-1.5-flash")
+                            # 🟢 CORREÇÃO CRÍTICA: Chamada com nomenclatura oficial estável de modelo
+                            model = genai.GenerativeModel("models/gemini-1.5-flash")
                             
-                            # Prompt focado em suporte de preenchimento
                             contexto_prompt = (
                                 "Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. "
                                 f"Responda de forma curta, clara e direta à seguinte dúvida: {pergunta_usuario}"
                             )
                             
-                            # Chamada correta da API
                             resposta = model.generate_content(contexto_prompt)
-                            texto_resposta = resposta.text
+                            texto_resposta = response.text if hasattr(resposta, 'text') else resposta.text
                         else:
                             texto_resposta = "⚠️ Chave 'GEMINI_API_KEY' não encontrada nos Secrets do Streamlit ou no arquivo local .env. Por favor, configure a chave para ativar a IA."
                     
                     except Exception as e:
-                        # Mostra o erro técnico real no terminal para sabermos o que aconteceu nos bastidores
                         print(f"Erro detalhado da API do Gemini: {e}")
                         texto_resposta = f"Não consegui conectar ao cérebro da IA. Detalhe técnico: {str(e)}"
                     
