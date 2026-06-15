@@ -89,57 +89,6 @@ def avaliar_maturidade(respostas: dict[str, str]) -> tuple[str, str]:
     return nivel, str(percentual)
 
 
-def chamar_inteligencia_artificial(respostas: dict[str, str], nivel: str, percentual: str) -> str:
-    """Conecta com a API do Gemini para gerar uma análise consultiva ultra personalizada."""
-    api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
-    
-    if not api_key:
-        return (
-            f"DIAGNOSTICO PRE-AUDITORIA (Modo Padrao)\n\n"
-            f"O projeto apresenta um indice de compliance de {percentual}% com maturidade {nivel}.\n"
-            f"Principais pilares analisados: Atividade focada no segmento {obter(respostas, '1. Tipo principal do projeto')} "
-            f"no bioma {obter(respostas, '2. Bioma / regiao')}. Recomenda-se a estruturacao imediata dos "
-            f"gaps identificados no plano de acao da plataforma."
-        )
-        
-    try:
-        genai.configure(api_key=api_key)
-        # 🟢 CORREÇÃO CRÍTICA: Nomenclatura compatível com a API v1beta
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        
-        prompt = f"""
-        Atue como um Auditor Senior Internacional de Créditos de Carbono e Consultor Especialista no Sistema Brasileiro de Comercio de Emissoes (SBCE).
-        Gere uma analise de viabilidade comercial e due diligence tecnica estrita para o seguinte projeto baseado nas respostas do cliente:
-        
-        Contexto do Projeto:
-        - Tipo de Atividade: {obter(respostas, '1. Tipo principal do projeto')}
-        - Bioma/Regiao: {obter(respostas, '2. Bioma / regiao')}
-        - Area Declarada: {obter(respostas, '3. Área total envolvida')}
-        - Estagio Atual: {obter(respostas, '4. Estágio atual')}
-        - Situacao Fundiaria: {obter(respostas, '5. Documentação fundiária')}
-        - Risco de Sobreposicao no CAR: {obter(respostas, '23. Restrições e Sobreposições Territoriais')}
-        - Passivo de Reserva Legal: {obter(respostas, '24. Passivo de Reserva Legal')}
-        - Estimativa Volumetrica Anual: {obter(respostas, '9. Estimativa de tCO2e/ano')}
-        
-        Resultado do Algoritmo de Triagem:
-        - Classificacao Atual: Nivel {nivel} ({percentual}% de Compliance Inicial).
-        
-        Requisitos para o seu texto de resposta:
-        1. Escreva em formato fluido corporativo de alto padrao (tom consultivo, direto e analitico).
-        2. Nao use topicos com asteriscos, bolinhas ou markdown (pois isso quebra a geracao do PDF). Escreva em paragrafos limpos.
-        3. Faca um paragrafo curto sobre a Maturidade Geral, um paragrafo sobre os Gaps Fundiarios/CAR e um paragrafo final com a Diretriz Estratégica de Mercado (Mercado Regulado SBCE vs Voluntario Verra/Gold Standard).
-        4. IMPORTANTE: Remova qualquer tipo de acentuacao ou caractere especial do texto final (use 'analise' em vez de 'análise', 'estagio' em vez de 'estágio'). Isso e obrigatorio para evitar conflito de fontes no motor grafico.
-        
-        Retorne apenas o texto da analise consultiva final em 3 paragrafos limpos.
-        """
-        
-        response = model.generate_content(prompt)
-        return response.text.strip()
-        
-    except Exception as e:
-        return f"Erro na conexao com o cerebro de IA. Relatorio gerado com base nos parametros estruturais para o nivel {nivel} ({percentual}%). Detalhe: {str(e)}"
-
-
 def gerar_resumo_executivo(respostas: dict[str, str]) -> list[str]:
     """Gera o resumo das principais características do projeto."""
     resumo = []
@@ -179,11 +128,59 @@ def gerar_proximos_passos(respostas: dict[str, str]) -> list[str]:
     return passos
 
 
+def chamar_inteligencia_artificial(respostas: dict[str, str], nivel: str, percentual: str) -> str:
+    """Conecta com a API do Gemini para gerar uma análise consultiva ultra personalizada."""
+    api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    
+    if not api_key:
+        return (
+            f"DIAGNOSTICO PRE-AUDITORIA (Modo Padrao)\n\n"
+            f"O projeto apresenta um indice de compliance de {percentual}% com maturidade {nivel}.\n"
+            f"Principais pilares analisados: Atividade focada no segmento {obter(respostas, '1. Tipo principal do projeto')} "
+            f"no bioma {obter(respostas, '2. Bioma / regiao')}. Recomenda-se a estruturacao imediata dos "
+            f"gaps identificados no plano de acao da plataforma."
+        )
+        
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("models/gemini-1.5-flash")
+        
+        prompt = f"""
+        Atue como um Auditor Senior Internacional de Créditos de Carbono e Consultor Especialista no Sistema Brasileiro de Comercio de Emissoes (SBCE).
+        Gere uma analise de viabilidade comercial e due diligence tecnica estrita para o seguinte projeto baseado nas respostas do cliente:
+        
+        Contexto do Projeto:
+        - Tipo de Atividade: {obter(respostas, '1. Tipo principal do projeto')}
+        - Bioma/Regiao: {obter(respostas, '2. Bioma / regiao')}
+        - Area Declarada: {obter(respostas, '3. Área total envolvida')}
+        - Estagio Atual: {obter(respostas, '4. Estágio atual')}
+        - Situacao Fundiaria: {obter(respostas, '5. Documentação fundiária')}
+        - Risco de Sobreposicao no CAR: {obter(respostas, '23. Restrições e Sobreposições Territoriais')}
+        - Passivo de Reserva Legal: {obter(respostas, '24. Passivo de Reserva Legal')}
+        - Estimativa Volumetrica Anual: {obter(respostas, '9. Estimativa de tCO2e/ano')}
+        
+        Resultado do Algoritmo de Triagem:
+        - Classificacao Atual: Nivel {nivel} ({percentual}% de Compliance Inicial).
+        
+        Requisitos para o seu texto de resposta:
+        1. Escreva em formato fluido corporativo de alto padrao (tom consultivo, direto e analitico).
+        2. Nao use topicos com asteriscos, bolinhas ou markdown (pois isso quebra a geracao do PDF). Escreva em paragrafos limpos.
+        3. Faca um paragrafo curto sobre a Maturidade Geral, um paragrafo sobre os Gaps Fundiarios/CAR e um paragrafo final com a Diretriz Estratégica de Mercado (Mercado Regulado SBCE vs Voluntario Verra/Gold Standard).
+        4. IMPORTANTE: Remova qualquer tipo de acentuacao ou caractere especial do texto final (use 'analise' em vez de 'análise', 'estagio' invez de 'estágio'). Isso e obrigatorio para evitar conflito de fontes no motor grafico.
+        
+        Retorne apenas o texto da analise consultiva final em 3 paragrafos limpos.
+        """
+        
+        response = model.generate_content(prompt)
+        return response.text.strip()
+        
+    except Exception as e:
+        return f"Erro na conexao com o cerebro de IA. Relatorio gerado com base nos parametros estruturais para o nivel {nivel} ({percentual}%). Detalhe: {str(e)}"
+
+
 def gerar_relatorio_pdf(respostas: dict[str, str]) -> bytes:
     """Gera o relatório final formatado em PDF sem quebras e com inteligência artificial."""
     nivel, percentual = avaliar_maturidade(respostas)
-    
-    # 🧠 Integração cognitiva do Gemini escrevendo o relatório real
     analise_ia = chamar_inteligencia_artificial(respostas, nivel, percentual)
     
     pdf = FPDF()
@@ -217,7 +214,7 @@ def gerar_relatorio_pdf(respostas: dict[str, str]) -> bytes:
     pdf.multi_cell(190, 6, f"- Classificacao Geral do Ativo: Nivel {nivel}\n- Indice de Adequacao Regulada: {percentual}%\n- Escala do Projeto: {obter(respostas, '3. Área total envolvida')}")
     pdf.ln(6)
     
-    # 2. Avaliação Dinâmica da IA (Onde o Gemini escreve!)
+    # 2. Avaliação Dinâmica da IA
     pdf.set_font("Arial", "B", 13)
     pdf.set_text_color(*verde_escuro)
     pdf.cell(190, 8, "2. AVALIACAO ESPECIFICA DO AUDITOR INTELIGENTE", ln=True)
@@ -249,4 +246,4 @@ def gerar_relatorio_pdf(respostas: dict[str, str]) -> bytes:
     pdf.set_text_color(120, 120, 120)
     pdf.cell(190, 5, "Relatorio analitico gerado por integracao cognitiva de IA em conformidade com as regras do SBCE e CVM.", ln=True, align="C")
     
-    return bytes(pdf.output())
+    return pdf.output(dest='S').encode('latin-1')
