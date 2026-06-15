@@ -107,7 +107,7 @@ def gerar_template_pdf() -> bytes:
             pdf.cell(190, 5.5, "__________________________________________________________________________________________", ln=True)
             pdf.ln(1)
             
-    return bytes(pdf.output())
+    return pdf.output(dest='S').encode('latin-1')
 
 # ── Estrutura do questionário ────────────────────────────────────────────────
 BLOCOS = [
@@ -420,7 +420,7 @@ def main() -> None:
                         if api_key:
                             # Configuração oficial da biblioteca google-generativeai
                             genai.configure(api_key=api_key)
-                            model = genai.GenerativeModel("gemini-pro")
+                            model = genai.GenerativeModel("gemini-1.5-flash")
                             
                             # Prompt focado em suporte de preenchimento
                             contexto_prompt = (
