@@ -414,19 +414,30 @@ def main() -> None:
             with st.chat_message("assistant"):
                 with st.spinner("Analisando..."):
                     try:
+                        # 🔎 Tenta pegar a chave do Streamlit Cloud ou do arquivo .env local
                         api_key = st.secrets.get("GEMINI_API_KEY")
+                        
                         if api_key:
+                            # Configuração oficial da biblioteca google-generativeai
                             genai.configure(api_key=api_key)
-                            model = genai.GenerativeModel("gemini-1.5-flash")
+                            model = genai.GenerativeModel("gemini-1.5-flash-latest")
                             
-                            contexto_prompt = f"Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. Responda de forma curta, clara e direta à seguinte dúvida: {pergunta_usuario}"
+                            # Prompt focado em suporte de preenchimento
+                            contexto_prompt = (
+                                "Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. "
+                                f"Responda de forma curta, clara e direta à seguinte dúvida: {pergunta_usuario}"
+                            )
                             
+                            # Chamada correta da API
                             resposta = model.generate_content(contexto_prompt)
                             texto_resposta = resposta.text
                         else:
-                            texto_resposta = "Chave de IA não configurada nos Secrets, mas o copiloto de tela está ativo!"
+                            texto_resposta = "⚠️ Chave 'GEMINI_API_KEY' não encontrada nos Secrets do Streamlit ou no arquivo local .env. Por favor, configure a chave para ativar a IA."
+                    
                     except Exception as e:
-                        texto_resposta = "Estou processando sua dúvida. Verifique a conexão com a API."
+                        # Mostra o erro técnico real no terminal para sabermos o que aconteceu nos bastidores
+                        print(f"Erro detalhado da API do Gemini: {e}")
+                        texto_resposta = f"Não consegui conectar ao cérebro da IA. Detalhe técnico: {str(e)}"
                     
                     st.write(texto_resposta)
                     st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
