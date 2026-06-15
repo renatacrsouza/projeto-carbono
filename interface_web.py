@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Optional
 import streamlit as st
 from fpdf import FPDF
-import google.generativeai as genai
+from google import genai
 
 from diagnostico import (
     avaliar_maturidade,
@@ -419,16 +419,19 @@ def main() -> None:
                         api_key = st.secrets.get("GEMINI_API_KEY")
                         
                         if api_key:
-                            genai.configure(api_key=api_key)
-                            # 🟢 CORREÇÃO CRÍTICA: Chamada com nomenclatura oficial estável de modelo
-                            model = genai.GenerativeModel("models/gemini-1.5-flash")
+                            # Nova forma oficial de conectar com a IA da Google
+                            client = genai.Client(api_key=api_key)
                             
                             contexto_prompt = (
                                 "Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. "
                                 f"Responda de forma curta, clara e direta à seguinte dúvida: {pergunta_usuario}"
                             )
                             
-                            resposta = model.generate_content(contexto_prompt)
+                            # Chamada ultra rápida usando o modelo correto de nova geração
+                            resposta = client.models.generate_content(
+                                model='gemini-1.5-flash',
+                                contents=contexto_prompt,
+                            )
                             texto_resposta = resposta.text
                         else:
                             texto_resposta = "⚠️ Chave 'GEMINI_API_KEY' não encontrada nos Secrets do Streamlit ou no arquivo local .env. Por favor, configure a chave para ativar a IA."

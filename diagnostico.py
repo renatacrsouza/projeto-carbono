@@ -5,7 +5,7 @@ import os
 from typing import Any
 from fpdf import FPDF
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 
 
 def obter(respostas: dict[str, str], chave: str) -> str:
@@ -142,8 +142,8 @@ def chamar_inteligencia_artificial(respostas: dict[str, str], nivel: str, percen
         )
         
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("models/gemini-1.5-flash")
+        # 🟢 ATUALIZAÇÃO: Nova forma oficial de conectar usando a biblioteca moderna
+        client = genai.Client(api_key=api_key)
         
         prompt = f"""
         Atue como um Auditor Senior Internacional de Créditos de Carbono e Consultor Especialista no Sistema Brasileiro de Comercio de Emissoes (SBCE).
@@ -166,12 +166,16 @@ def chamar_inteligencia_artificial(respostas: dict[str, str], nivel: str, percen
         1. Escreva em formato fluido corporativo de alto padrao (tom consultivo, direto e analitico).
         2. Nao use topicos com asteriscos, bolinhas ou markdown (pois isso quebra a geracao do PDF). Escreva em paragrafos limpos.
         3. Faca um paragrafo curto sobre a Maturidade Geral, um paragrafo sobre os Gaps Fundiarios/CAR e um paragrafo final com a Diretriz Estratégica de Mercado (Mercado Regulado SBCE vs Voluntario Verra/Gold Standard).
-        4. IMPORTANTE: Remova qualquer tipo de acentuacao ou caractere especial do texto final (use 'analise' em vez de 'análise', 'estagio' invez de 'estágio'). Isso e obrigatorio para evitar conflito de fontes no motor grafico.
+        4. IMPORTANTE: Remova qualquer tipo de acentuacao ou caractere especial do texto final (use 'analise' em vez de 'análise', 'estagio' em vez de 'estágio'). Isso e obrigatorio para evitar conflito de fontes no motor grafico.
         
         Retorne apenas o texto da analise consultiva final em 3 paragrafos limpos.
         """
         
-        response = model.generate_content(prompt)
+        # 🟢 ATUALIZAÇÃO: Chamada moderna com a sintaxe correta da nova geração da Google
+        response = client.models.generate_content(
+            model='gemini-1.5-flash',
+            contents=prompt,
+        )
         return response.text.strip()
         
     except Exception as e:
