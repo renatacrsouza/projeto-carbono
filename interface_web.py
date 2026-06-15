@@ -420,7 +420,7 @@ def main() -> None:
                         if api_key:
                             # Configuração oficial da biblioteca google-generativeai
                             genai.configure(api_key=api_key)
-                            model = genai.GenerativeModel("gemini-1.5-flash-latest")
+                            model = genai.GenerativeModel("gemini-pro")
                             
                             # Prompt focado em suporte de preenchimento
                             contexto_prompt = (
