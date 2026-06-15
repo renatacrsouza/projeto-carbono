@@ -105,7 +105,7 @@ def chamar_inteligencia_artificial(respostas: dict[str, str], nivel: str, percen
     try:
         genai.configure(api_key=api_key)
         # 🟢 CORREÇÃO CRÍTICA: Nomenclatura compatível com a API v1beta
-        model = genai.GenerativeModel("gemini-1.5-flash-latest")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         
         prompt = f"""
         Atue como um Auditor Senior Internacional de Créditos de Carbono e Consultor Especialista no Sistema Brasileiro de Comercio de Emissoes (SBCE).
