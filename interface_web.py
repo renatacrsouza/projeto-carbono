@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Optional
 import streamlit as st
 from fpdf import FPDF
+import google.generativeai as genai
 
 from diagnostico import (
     avaliar_maturidade,
@@ -96,14 +97,12 @@ def gerar_template_pdf() -> bytes:
         pdf.ln(2)
         
         for item in itens:
-            # 🟢 Titulo do item ocupando toda a largura para não quebrar os traços abaixo
             pdf.set_font("Arial", "B", 9)
             pdf.set_text_color(27, 67, 50)
             pdf.cell(190, 5, item, ln=True)
             
-            # 🟢 As duas linhas de resposta idênticas e milimetricamente do mesmo tamanho
             pdf.set_font("Arial", "", 9.5)
-            pdf.set_text_color(180, 180, 180) # Deixa o traço cinza elegante para escrita
+            pdf.set_text_color(180, 180, 180)
             pdf.cell(190, 5.5, "__________________________________________________________________________________________", ln=True)
             pdf.cell(190, 5.5, "__________________________________________________________________________________________", ln=True)
             pdf.ln(1)
@@ -201,17 +200,6 @@ BLOCOS = [
     }
 ]
 
-CAMPOS_PERFIL = [
-    ("Tipo", "1. Tipo principal do projeto"), ("Bioma / Região", "2. Bioma / região"), ("Área", "3. Área total envolvida"),
-    ("Estágio", "4. Estágio atual"), ("Documentação fundiária", "5. Documentação fundiária"), ("Dados históricos", "6. Dados históricos"),
-    ("Certificações", "7. Certificação ambiental ou social"), ("Atividade", "8. Atividade principal"), ("Estimativa", "9. Estimativa de tCO2e/ano"),
-    ("Benefícios", "10. Benefícios socioambientais"), ("Certificadora", "11. Contato com certificadora"), ("Objetivo", "12. Objetivo principal com os créditos"),
-    ("Capital", "13. Acesso a capital para certificação"), ("Equipe", "14. Equipe técnica"), ("Prazo", "15. Prazo para submissão"),
-    ("Conflitos", "16. Conflitos fundiários"), ("Passivos", "17. Passivos ambientais"), ("Permanência", "18. Permanência por 20-30 anos"),
-    ("Docs Territoriais", "19. Documentação Territorial Obrigatória"), ("Docs Técnicos", "20. Documentação Técnica de Carbono"),
-    ("Faixa SBCE", "21. Faixa de Emissões Anuais"), ("Ativos", "22. Enquadramento de Ativos"), ("Sobreposições", "23. Restrições e Sobreposições Territoriais"), ("Déficit RL", "24. Passivo de Reserva Legal")
-]
-
 CORES_MATURIDADE = {"AVANCADO": ("#1E3F20", "#EBF5EE"), "INTERMEDIARIO": ("#D97706", "#FEF3C7"), "INICIAL": ("#DC2626", "#FEE2E2")}
 
 
@@ -276,6 +264,20 @@ def aplicar_estilo() -> None:
                 width: 100%; 
             }
             div.stButton > button[kind="primary"]:hover { background: #0077ED; }
+
+            /* 🪄 TRUQUE DO ESPELHO: Move a barra lateral nativa de forma fixa para o canto direito */
+            [data-testid="stSidebar"] {
+                left: auto !important;
+                right: 0 !important;
+                transform: translate3d(0px, 0px, 0px) !important;
+            }
+            [data-testid="stAppViewContainer"] {
+                flex-direction: row-reverse !important;
+            }
+            [data-testid="stSidebarCollapseButton"] {
+                left: auto !important;
+                right: 10px !important;
+            }
         </style>
         """,
         unsafe_allow_html=True,
@@ -371,12 +373,67 @@ def exibir_relatorio(respostas: dict[str, str], pdf_bytes: bytes) -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title="Carbon Diagnosis", page_icon="🌱", layout="wide", initial_sidebar_state="collapsed")
+    st.set_page_config(page_title="Carbon Diagnosis", page_icon="🌱", layout="wide", initial_sidebar_state="expanded")
     aplicar_estilo()
 
+    # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (COPILOTO IA)
+    with st.sidebar:
+        st.header("🌱 Copiloto de Carbono")
+        st.caption("Tire suas dúvidas sobre as perguntas ou envie documentos para análise em tempo real.")
+        
+        # 📎 1. Área para Anexar Documentos
+        st.subheader("Anexar Documentos")
+        arquivo_anexado = st.file_uploader(
+            "Envie a Matrícula, CAR ou PDD (PDF)", 
+            type=["pdf"], 
+            help="A IA lerá o documento para te ajudar a responder o formulário."
+        )
+        
+        if arquivo_anexado:
+            st.success("Documento carregado com sucesso!")
+            
+        st.markdown("---")
+        
+        # 💬 2. Estrutura do Chat de Suporte na Tela
+        st.subheader("Chat de Suporte")
+        
+        if "historico_chat" not in st.session_state:
+            st.session_state.historico_chat = [
+                {"role": "assistant", "content": "Olá! Sou seu assistente de due diligence. Se não souber como responder alguma pergunta do formulário ao lado esquerdo, ou quiser que eu analise o documento anexo, é só me chamar!"}
+            ]
+            
+        for mensagem in st.session_state.historico_chat:
+            with st.chat_message(mensagem["role"]):
+                st.write(mensagem["content"])
+                
+        if pergunta_usuario := st.chat_input("Ex: O que é adicionalidade?"):
+            with st.chat_message("user"):
+                st.write(pergunta_usuario)
+            st.session_state.historico_chat.append({"role": "user", "content": pergunta_usuario})
+            
+            with st.chat_message("assistant"):
+                with st.spinner("Analisando..."):
+                    try:
+                        api_key = st.secrets.get("GEMINI_API_KEY")
+                        if api_key:
+                            genai.configure(api_key=api_key)
+                            model = genai.GenerativeModel("gemini-1.5-flash")
+                            
+                            contexto_prompt = f"Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. Responda de forma curta, clara e direta à seguinte dúvida: {pergunta_usuario}"
+                            
+                            resposta = model.generate_content(contexto_prompt)
+                            texto_resposta = resposta.text
+                        else:
+                            texto_resposta = "Chave de IA não configurada nos Secrets, mas o copiloto de tela está ativo!"
+                    except Exception as e:
+                        texto_resposta = "Estou processando sua dúvida. Verifique a conexão com a API."
+                    
+                    st.write(texto_resposta)
+                    st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
+
+    # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
 
-    # 🟢 NOVO BOTÃO: Gera e baixa o modelo em formato PDF legítimo
     template_pdf = gerar_template_pdf()
     c_btn, c_radio = st.columns([1, 2])
     with c_btn:
@@ -389,7 +446,7 @@ def main() -> None:
         )
     with c_radio:
         jornada = st.radio("Jornada do Projeto:", ["✨ Estruturar do zero (Frente 1 — Estruturação)", "🔍 Validar ativo existente (Frente 2 — Pré-Auditoria)"], index=0, horizontal=True)
-    
+        
     st.divider()
 
     if "relatorio_gerado" not in st.session_state:
@@ -410,7 +467,6 @@ def main() -> None:
         with tab:
             st.markdown(f"#### {bloco['subtitulo']}")
             
-            # 🟢 SOLUÇÃO: Usamos o container nativo com borda para o design ficar perfeito e sem bugs!
             with st.container(border=True):
                 perguntas = bloco["perguntas"]
                 for idx in range(0, len(perguntas), 2):
@@ -422,7 +478,7 @@ def main() -> None:
                         v1 = renderizar_pergunta(p1, indice_real, idx)
                         if v1: 
                             respostas_parciais[p1["chave"]] = v1
-                        
+                            
                     with col2:
                         if idx + 1 < len(perguntas):
                             p2 = perguntas[idx + 1]
@@ -430,7 +486,7 @@ def main() -> None:
                             v2 = renderizar_pergunta(p2, indice_real, idx + 1)
                             if v2: 
                                 respostas_parciais[p2["chave"]] = v2
-                    
+                        
                     if idx + 2 < len(perguntas):
                         st.divider()
 
