@@ -1,4 +1,4 @@
-Python
+
 #!/usr/bin/env python3
 """Interface web premium do diagnóstico de carbono - Estilo Minimalista Apple."""
 
@@ -429,7 +429,7 @@ def main() -> None:
                             )
                             
                             resposta = model.generate_content(contexto_prompt)
-                            texto_resposta = response.text if hasattr(resposta, 'text') else resposta.text
+                            texto_resposta = resposta.text
                         else:
                             texto_resposta = "⚠️ Chave 'GEMINI_API_KEY' não encontrada nos Secrets do Streamlit ou no arquivo local .env. Por favor, configure a chave para ativar a IA."
                     
