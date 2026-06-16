@@ -7,6 +7,7 @@ from typing import Optional
 import streamlit as st
 from fpdf import FPDF
 from google import genai
+from google.genai import types  # 🟢 ADICIONE ESSA LINHA AQUI NO TOPO!
 
 from diagnostico import (
     avaliar_maturidade,
@@ -436,23 +437,23 @@ def main() -> None:
                             
                             if api_key:
                                 client = genai.Client(api_key=api_key)
-                                conteudos_enviar = []
                                 
-                                # Se o usuário carregou um PDF, lê os bytes e anexa na chamada
-                                if arquivo_anexado:
-                                    bytes_pdf = arquivo_anexado.read()
-                                    conteudos_enviar.append({
-                                        "mime_type": "application/pdf",
-                                        "data": bytes_pdf
-                                    })
-                                
-                                # Constrói o prompt seguro de contexto técnico
+                                # 🟢 AJUSTE DA LISTA: Começamos a lista diretamente com a nossa instrução em texto
                                 contexto_prompt = (
                                     "Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. "
                                     "Se um documento em PDF foi anexado a esta chamada, use os dados contidos nele para embasar sua resposta. "
                                     f"Responda de forma curta, clara e direta à seguinte dúvida do usuário: {texto_digitado}"
                                 )
-                                conteudos_enviar.append(contexto_prompt)
+                                conteudos_enviar = [contexto_prompt]
+                                
+                                # Se o usuário carregou um PDF, nós adicionamos ele DEPOIS do texto na lista
+                                if arquivo_anexado:
+                                    bytes_pdf = arquivo_anexado.read()
+                                    pdf_part = types.Part.from_bytes(
+                                        data=bytes_pdf,
+                                        mime_type="application/pdf"
+                                    )
+                                    conteudos_enviar.append(pdf_part)
                                 
                                 # Escudo protetor contra erro 503 (3 tentativas automáticas)
                                 for tentativa in range(3):
