@@ -524,73 +524,89 @@ def main() -> None:
         st.session_state.pdf_data = b""
         st.session_state.respostas_finais = {}
 
+    # 🕹️ CONTROLADOR DA PÁGINA ATUAL (Garante que a mudança seja automática)
+    if "bloco_atual_index" not in st.session_state:
+        st.session_state.bloco_atual_index = 0
+
     if "Frente 1" in jornada:
         blocos_ativos = BLOCOS[:6]
     else:
         blocos_ativos = [BLOCOS[0], BLOCOS[1], BLOCOS[6], BLOCOS[7], BLOCOS[8]]
 
-    tab_labels = [f"{b['icone']} {b['titulo']}" for b in blocos_ativos]
-    tabs = st.tabs(tab_labels)
+    # Segurança para reiniciar o índice se mudar de jornada
+    if st.session_state.bloco_atual_index >= len(blocos_ativos):
+        st.session_state.bloco_atual_index = 0
+
+    # 🗺️ MENU DE NAVEGAÇÃO VISUAL PREMIUM (Estilo Apple Progressivo)
+    # Em vez de st.tabs que trava a tela, criamos um indicador de passos horizontal elegante
+    col_passos = st.columns(len(blocos_ativos))
+    for idx_passo, b_passo in enumerate(blocos_ativos):
+        with col_passos[idx_passo]:
+            # Destaca visualmente onde o usuário está no momento
+            if idx_passo == st.session_state.bloco_atual_index:
+                st.markdown(f"<div style='text-align:center; border-bottom:3px solid #0071E3; padding-bottom:5px; font-weight:700;'>{b_passo['icone']} {b_passo['titulo']}</div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div style='text-align:center; color:#86868B; padding-bottom:8px;'>{b_passo['icone']} {b_passo['titulo']}</div>", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Captura o bloco ativo com base no botão que o usuário clicou
+    bloco = blocos_ativos[st.session_state.bloco_atual_index]
     respostas_parciais: dict[str, str] = {}
 
-    contador_item = 1
-
-    for i, (tab, bloco) in enumerate(zip(tabs, blocos_ativos)):
-        with tab:
-            st.markdown(f"#### {bloco['subtitulo']}")
+    # Renderiza o bloco de perguntas ativo na tela
+    st.markdown(f"#### {bloco['subtitulo']}")
+    
+    with st.container(border=True):
+        perguntas = bloco["perguntas"]
+        # Recalcula o contador global para manter os itens sequenciais perfeitos
+        contador_item = 1 + sum(len(b["perguntas"]) for b in blocos_ativos[:st.session_state.bloco_atual_index])
+        
+        for idx in range(0, len(perguntas), 2):
+            col1, col2 = st.columns(2)
             
-            with st.container(border=True):
-                perguntas = bloco["perguntas"]
-                for idx in range(0, len(perguntas), 2):
-                    col1, col2 = st.columns(2)
+            with col1:
+                p1 = perguntas[idx]
+                indice_real = BLOCOS.index(bloco)
+                v1 = renderizar_pergunta(p1, indice_real, idx, contador_item)
+                contador_item += 1
+                if v1: 
+                    respostas_parciais[p1["chave"]] = v1
                     
-                    with col1:
-                        p1 = perguntas[idx]
-                        indice_real = BLOCOS.index(bloco)
-                        v1 = renderizar_pergunta(p1, indice_real, idx, contador_item)
-                        contador_item += 1
-                        if v1: 
-                            respostas_parciais[p1["chave"]] = v1
-                            
-                    with col2:
-                        if idx + 1 < len(perguntas):
-                            p2 = perguntas[idx + 1]
-                            indice_real = BLOCOS.index(bloco)
-                            v2 = renderizar_pergunta(p2, indice_real, idx + 1, contador_item)
-                            contador_item += 1
-                            if v2: 
-                                respostas_parciais[p2["chave"]] = v2
-                        
-                    if idx + 2 < len(perguntas):
-                        st.divider()
+            with col2:
+                if idx + 1 < len(perguntas):
+                    p2 = perguntas[idx + 1]
+                    indice_real = BLOCOS.index(bloco)
+                    v2 = renderizar_pergunta(p2, indice_real, idx + 1, contador_item)
+                    contador_item += 1
+                    if v2: 
+                        respostas_parciais[p2["chave"]] = v2
+                
+            if idx + 2 < len(perguntas):
+                st.divider()
 
-            # 🎛️ BOTÕES DE NAVEGAÇÃO NO RODAPÉ DE CADA ABA
-            st.markdown("<br>", unsafe_allow_html=True)
-            nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
-            
-            with nav_col1:
-                # Mostra o botão "Voltar" a partir da segunda aba
-                if i > 0:
-                    if st.button(f"⬅️ Anterior", key=f"btn_voltar_{i}", use_container_width=True):
-                        st.info(f"Clique na aba '{tab_labels[i-1]}' acima para voltar.")
-            
-            with nav_col3:
-                # Se não for a última aba, mostra o botão "Próximo"
-                if i < len(blocos_ativos) - 1:
-                    if st.button(f"Próximo ➡️", key=f"btn_proximo_{i}", use_container_width=True):
-                        st.success(f"Discorra para a aba '{tab_labels[i+1]}' acima para continuar.")
-                # Na última aba, exibe o botão mestre para emitir o relatório desse bloco
-                else:
-                    gerar_final = st.button("🌿 Emitir Relatório", key="btn_gerar_final_aba", type="primary", use_container_width=True)
-                    if gerar_final:
-                        faltando = validar_respostas(respostas_parciais, blocos_ativos)
-                        if faltando:
-                            st.error(f"⚠️ Por favor, preencha todos os itens obrigatórios antes de gerar. Pendentes: {', '.join(faltando)}")
-                        else:
-                            st.session_state.respostas_finais = respostas_parciais
-                            st.session_state.pdf_data = gerar_relatorio_pdf(respostas_parciais)
-                            st.session_state.relatorio_gerado = True
-                            st.balloons()
+    # 🎛️ BOTÕES DE NAVEGAÇÃO AUTOMÁTICA NO RODAPÉ
+    st.markdown("<br>", unsafe_allow_html=True)
+    nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
+    
+    with nav_col1:
+        if st.session_state.bloco_atual_index > 0:
+            if st.button("⬅️ Anterior", use_container_width=True):
+                st.session_state.bloco_atual_index -= 1
+                st.rerun()
+                
+    with nav_col3:
+        if st.session_state.bloco_atual_index < len(blocos_ativos) - 1:
+            if st.button("Próximo ➡️", use_container_width=True):
+                st.session_state.bloco_atual_index += 1
+                st.rerun()
+        else:
+            gerar_final = st.button("🌿 Emitir Relatório", key="btn_gerar_final_aba", type="primary", use_container_width=True)
+            if gerar_final:
+                st.session_state.respostas_finais = respostas_parciais
+                st.session_state.pdf_data = gerar_relatorio_pdf(respostas_parciais)
+                st.session_state.relatorio_gerado = True
+                st.balloons()
 
     total_perguntas = sum(len(b["perguntas"]) for b in blocos_ativos)
     respondidas = len(respostas_parciais)
