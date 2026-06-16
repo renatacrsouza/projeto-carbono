@@ -8,7 +8,7 @@ import streamlit as st
 from fpdf import FPDF
 from google import genai
 from google.genai import types
-import pandas as pd  # 🟢 Adicionado para gerenciar os dados geográficos do mapa
+import pandas as pd
 
 from diagnostico import (
     avaliar_maturidade,
@@ -124,9 +124,16 @@ BLOCOS = [
             {"chave": "3. Área total envolvida", "texto": "Qual é a área total envolvida?", "opcoes": ["Menos de 50 ha", "50 a 500 ha", "500 a 5.000 ha", "Mais de 5.000 ha"]},
         ],
     },
+    # 🟢 NOVO BLOCO EXCLUSIVO: Criado para isolar o mapeamento em sua própria aba
+    {
+        "titulo": "Mapeamento",
+        "subtitulo": "02 · MAPEAMENTO GEOGRÁFICO DA ÁREA",
+        "icone": "🗺️",
+        "perguntas": [] # Não possui perguntas tradicionais, apenas o mapa customizado
+    },
     {
         "titulo": "Situação Atual",
-        "subtitulo": "02 · SITUAÇÃO ATUAL E HISTÓRICO",
+        "subtitulo": "03 · SITUAÇÃO ATUAL E HISTÓRICO",
         "icone": "📋",
         "perguntas": [
             {"chave": "4. Estágio atual", "texto": "Qual é o estágio atual?", "opcoes": ["Só tenho a ideia", "Estou estruturando", "Projeto já implementado", "Em monitoramento", "Já passou por auditoria"]},
@@ -137,7 +144,7 @@ BLOCOS = [
     },
     {
         "titulo": "Potencial",
-        "subtitulo": "03 · POTENCIAL DE GERAÇÃO",
+        "subtitulo": "04 · POTENCIAL DE GERAÇÃO",
         "icone": "⚡",
         "perguntas": [
             {"chave": "8. Atividade principal", "texto": "Qual é a atividade geradora de créditos?", "opcoes": ["Evitar desmatamento (REDD+)", "Reflorestamento / restauração", "Plantio direto / recuperação solo", "Biodigestor / biogás", "Energia solar / eólica", "Eficiência energética", "Outro"]},
@@ -147,7 +154,7 @@ BLOCOS = [
     },
     {
         "titulo": "Certificação",
-        "subtitulo": "04 · CERTIFICAÇÃO E MERCADO",
+        "subtitulo": "05 · CERTIFICAÇÃO E MERCADO",
         "icone": "🏅",
         "perguntas": [
             {"chave": "11. Contato com certificadora", "texto": "Já teve contato com alguma certificadora?", "opcoes": ["Verra (VCS)", "Gold Standard", "RENOVABIO", "SBCE (brasileiro)", "Nenhuma ainda"]},
@@ -157,7 +164,7 @@ BLOCOS = [
     },
     {
         "titulo": "Execução",
-        "subtitulo": "05 · CAPACIDADE DE EXECUÇÃO",
+        "subtitulo": "06 · CAPACIDADE DE EXECUÇÃO",
         "icone": "🛠️",
         "perguntas": [
             {"chave": "14. Equipe técnica", "texto": "Há equipe técnica para conduzir o projeto?", "opcoes": ["Sim, equipe interna", "Sim, via consultoria", "Não ainda"]},
@@ -166,7 +173,7 @@ BLOCOS = [
     },
     {
         "titulo": "Riscos",
-        "subtitulo": "06 · RISCOS E BARREIRAS",
+        "subtitulo": "07 · RISCOS E BARREIRAS",
         "icone": "⚠️",
         "perguntas": [
             {"chave": "16. Conflitos fundiários", "texto": "Existem conflitos fundiários na área?", "opcoes": ["Não", "Há pendências em resolução", "Sim"]},
@@ -176,7 +183,7 @@ BLOCOS = [
     },
     {
         "titulo": "Checklist Docs",
-        "subtitulo": "07 · DOCUMENTAÇÃO ESSENCIAL AUDITÁVEL",
+        "subtitulo": "08 · DOCUMENTAÇÃO ESSENCIAL AUDITÁVEL",
         "icone": "📋",
         "perguntas": [
             {"chave": "19. Documentação Territorial Obrigatória", "texto": "Quais documentos territoriais possui regularizados?", "opcoes": ["Matrícula Atualizada", "CCIR Regular", "Declaração do ITR (DITR)", "Georreferenciamento (SIGEF)"], "multipla": True},
@@ -185,7 +192,7 @@ BLOCOS = [
     },
     {
         "titulo": "Gap Analysis SBCE",
-        "subtitulo": "08 · ENQUADRAMENTO REGULATÓRIO (LEI 15.042/24)",
+        "subtitulo": "09 · ENQUADRAMENTO REGULATÓRIO (LEI 15.042/24)",
         "icone": "🔍",
         "perguntas": [
             {"chave": "21. Faixa de Emissões Anuais", "texto": "Volume estimado de emissões de GEE da atividade por ano?", "opcoes": ["Abaixo de 10.000 tCO2e (Isento)", "Entre 10.000 e 25.000 tCO2e (Monitorado)", "Acima de 25.000 tCO2e (Metas Rígidas)", "Não sei estimar"]},
@@ -194,7 +201,7 @@ BLOCOS = [
     },
     {
         "titulo": "Análise do CAR",
-        "subtitulo": "09 · RESTRIÇÕES AMBIENTAIS E MAPA DE RISCO",
+        "subtitulo": "10 · RESTRIÇÕES AMBIENTAIS E MAPA DE RISCO",
         "icone": "🗺️",
         "perguntas": [
             {"chave": "23. Restrições e Sobreposições Territoriais", "texto": "A análise indicou sobreposição da área?", "opcoes": ["Não, área 100% livre e regular", "Sobreposição parcial com UC", "Sobreposição com TI ou Quilombolas", "Sobreposição com outras propriedades", "Não realizei a análise de Gaps"]},
@@ -218,7 +225,6 @@ def aplicar_estilo() -> None:
                 background-color: #F5F5F7;
             }
             
-            /* 🏰 HEADER PRINCIPAL */
             .main-header { 
                 background: #FFFFFF; 
                 padding: 1.8rem 2.2rem; 
@@ -231,7 +237,6 @@ def aplicar_estilo() -> None:
             .main-header h1 { font-size: 2.2rem; font-weight: 700; margin: 0; color: #1D1D1F !important; }
             .main-header p { font-size: 1.1rem; color: #86868B; margin-top: 0.4rem; }
             
-            /* 📦 CARTÕES PREMIUM */
             .stVerticalBlock[style*="border"] {
                 border-radius: 20px !important;
                 background-color: #FFFFFF !important;
@@ -241,7 +246,6 @@ def aplicar_estilo() -> None:
                 box-shadow: 0 10px 30px rgba(0,0,0,0.02) !important;
             }
             
-            /* 🟢 TAGS DE ITEM EM VERDE BOTÂNICO */
             .pergunta-num { 
                 display: inline-block !important; 
                 background-color: #EBF5EE !important; 
@@ -255,7 +259,6 @@ def aplicar_estilo() -> None:
                 border: 1px solid #D2E7D6 !important;
             }
             
-            /* ✍️ PERGUNTAS MAIS EM DESTAQUE */
             h5 {
                 font-weight: 700 !important;
                 color: #1D1D1F !important;
@@ -264,37 +267,19 @@ def aplicar_estilo() -> None:
                 margin-bottom: 1rem !important;
             }
             
-            /* 🔘 ESPAÇAMENTO DOS BOTÕES DE OPÇÃO */
             div[data-testid="stWidgetLabel"] {
                 margin-bottom: 0.5rem !important;
             }
             
-            /* 📊 DEMAIS ELEMENTOS */
             .relatorio-header { background: #1B4332; color: white; padding: 2.5rem; border-radius: 24px; text-align: center; margin-top: 3rem; }
             .relatorio-header h2 { color: white !important; margin: 0; font-size: 1.8rem; font-weight: 700; }
             .metric-card { background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 20px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.01); }
             .passo-item { background: #F5F5F7; border-left: 5px solid #1B4332; padding: 1rem; border-radius: 0 16px 16px 0; margin: 0.6rem 0; font-size: 1rem; }
             
-            .stTabs [data-baseweb="tab-list"] { gap: 6px; }
-            .stTabs [data-baseweb="tab"] { background: #FFFFFF; border-radius: 12px; padding: 8px 16px; font-weight: 500; color: #86868B !important; border: 1px solid #E5E5EA; }
-            .stTabs [aria-selected="true"] { background: #1D1D1F !important; color: #FFFFFF !important; border-color: #1D1D1F !important; font-weight: 600; }
-            
-            div.stButton > button[kind="primary"] { 
-                background: #0071E3; 
-                border: none; 
-                font-size: 1.1rem; 
-                font-weight: 600; 
-                padding: 0.8rem 2.5rem; 
-                border-radius: 16px; 
-                width: 100%; 
-            }
-
-            /* 🪄 BARRA LATERAL FIXA À DIREITA */
             [data-testid="stSidebar"] { left: auto !important; right: 0 !important; transform: translate3d(0px, 0px, 0px) !important; }
             [data-testid="stAppViewContainer"] { flex-direction: row-reverse !important; }
             [data-testid="stSidebarCollapseButton"] { left: auto !important; right: 10px !important; }
 
-            /* 🎯 COMPACTAÇÃO DA IA */
             [data-testid="stSidebarUserContent"] { padding-top: 1.5rem !important; padding-bottom: 1rem !important; gap: 0.4rem !important; }
             [data-testid="stSidebar"] hr { margin: 0.6rem 0 !important; }
             [data-testid="stSidebar"] [data-testid="stChatMessage"] { padding: 0.6rem 0.8rem !important; margin-bottom: 0.4rem !important; }
@@ -406,7 +391,6 @@ def main() -> None:
     if "respostas_acumuladas" not in st.session_state:
         st.session_state.respostas_acumuladas = {}
 
-    # Coordenadas padrão de Itu/SP como inicial do mapa corporativo
     if "latitude_mapa" not in st.session_state:
         st.session_state.latitude_mapa = -23.2641
     if "longitude_mapa" not in st.session_state:
@@ -459,7 +443,7 @@ def main() -> None:
                             if api_key:
                                 client = genai.Client(api_key=api_key)
                                 contexto_prompt = (
-                                    "Você é o Copiloto de Carbono, um specialist sênior em Due Diligence e estruturação de projetos de crédito de carbono no Brasil. "
+                                    "Você é o Copiloto de Carbono, um especialista sênior em Due Diligence e estruturação de projetos de crédito de carbono no Brasil. "
                                     "Sua missão é analisar as dúvidas do usuário e os documentos anexados (como CAR, Matrículas ou Inventários) com base rigorosa nas seguintes referências:\n"
                                     "1. GHG Protocol: Classifique e oriente sobre limites organizacionais e escopos de emissão (Escopos 1, 2 e 3).\n"
                                     "2. Diretrizes AFOLU: Avalie critérios de elegibilidade do solo, histórico de desmatamento/reflorestamento (ARR/REDD+) e o risco de Vazamento (Leakage).\n"
@@ -478,7 +462,7 @@ def main() -> None:
                                 for tentativa in range(3):
                                     try:
                                         resposta = client.models.generate_content(model='gemini-2.5-flash', contents=conteudos_enviar)
-                                        texto_resposta = response.text
+                                        texto_resposta = resposta.text
                                         break
                                     except Exception as e_chat:
                                         if "503" in str(e_chat) and tentativa < 2:
@@ -517,15 +501,18 @@ def main() -> None:
         st.session_state.bloco_atual_index = 0
 
     if "Frente 1" in jornada:
-        blocos_ativos = BLOCOS[:6]
+        # Pega Identificação, Mapeamento, Situação Atual, Potencial, Certificação, Execução, Riscos
+        blocos_ativos = [BLOCOS[0], BLOCOS[1], BLOCOS[2], BLOCOS[3], BLOCOS[4], BLOCOS[5], BLOCOS[6]]
     else:
-        blocos_ativos = [BLOCOS[0], BLOCOS[1], BLOCOS[6], BLOCOS[7], BLOCOS[8]]
+        # Pega Identificação, Mapeamento, Situação Atual, Checklist Docs, Gap Analysis SBCE, Análise do CAR
+        blocos_ativos = [BLOCOS[0], BLOCOS[1], BLOCOS[2], BLOCOS[7], BLOCOS[8], BLOCOS[9]]
 
     if st.session_state.bloco_atual_index >= len(blocos_ativos):
         st.session_state.bloco_atual_index = 0
 
-    # 📊 1. BARRA DE PROGRESSO EM TEMPO REAL POR PERGUNTA RESPONDIDA
-    total_perguntas = sum(len(b["perguntas"]) for b in blocos_ativos)
+    # 📊 BARRA DE PROGRESSO EM TEMPO REAL POR PERGUNTA
+    # Contamos o total apenas dos blocos de perguntas reais (excluindo o bloco de mapeamento)
+    total_perguntas = sum(len(b["perguntas"]) for b in blocos_ativos if b["titulo"] != "Mapeamento")
     respondidas = len(st.session_state.respostas_acumuladas)
     percentual_preenchido = int((respondidas / total_perguntas) * 100) if total_perguntas > 0 else 0
     
@@ -533,7 +520,7 @@ def main() -> None:
     st.progress(respondidas / total_perguntas if total_perguntas > 0 else 0.0)
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 🗺️ MENU DE NAVEGAÇÃO PROGRESSIVO
+    # 🗺️ MENU DE NAVEGAÇÃO PROGRESSIVO (Linha de passos superior)
     col_passos = st.columns(len(blocos_ativos))
     for idx_passo, b_passo in enumerate(blocos_ativos):
         with col_passos[idx_passo]:
@@ -548,34 +535,9 @@ def main() -> None:
     st.markdown(f"#### {bloco['subtitulo']}")
     
     with st.container(border=True):
-        perguntas = bloco["perguntas"]
-        contador_item = 1 + sum(len(b["perguntas"]) for b in blocos_ativos[:st.session_state.bloco_atual_index])
-        
-        for idx in range(0, len(perguntas), 2):
-            col1, col2 = st.columns(2)
-            with col1:
-                p1 = perguntas[idx]
-                indice_real = BLOCOS.index(bloco)
-                v1 = renderizar_pergunta(p1, indice_real, idx, contador_item)
-                contador_item += 1
-                if v1: 
-                    st.session_state.respostas_acumuladas[p1["chave"]] = v1
-            with col2:
-                if idx + 1 < len(perguntas):
-                    p2 = perguntas[idx + 1]
-                    indice_real = BLOCOS.index(bloco)
-                    v2 = renderizar_pergunta(p2, indice_real, idx + 1, contador_item)
-                    contador_item += 1
-                    if v2: 
-                        st.session_state.respostas_acumuladas[p2["chave"]] = v2
-                
-            if idx + 2 < len(perguntas):
-                st.divider()
-
-        # 🟢 2. INCLUSÃO DO MAPA INTERATIVO NO PRIMEIRO BLOCO (IDENTIFICAÇÃO)
-        if st.session_state.bloco_atual_index == 0:
-            st.divider()
-            st.markdown("##### 🗺️ Mapeamento Geográfico da Área de Estudo")
+        # 🗺️ SE FOR A ABA DE MAPEAMENTO: Renderiza apenas o módulo do Google Maps
+        if bloco["titulo"] == "Mapeamento":
+            st.markdown("##### Mapeamento Geográfico da Área de Estudo")
             st.caption("Insira as coordenadas decimais da propriedade para plotar o perímetro alvo de Due Diligence no mapa de auditoria:")
             
             geo_col1, geo_col2 = st.columns(2)
@@ -584,13 +546,39 @@ def main() -> None:
             with geo_col2:
                 lon_input = st.number_input("Longitude (ex: -47.2992):", value=st.session_state.longitude_mapa, format="%.4f", key="input_longitude_global")
             
-            # Atualiza o estado da sessão na hora
             st.session_state.latitude_mapa = lat_input
             st.session_state.longitude_mapa = lon_input
             
-            # Desenha o mapa nativo interativo do Streamlit (Alimentado por OpenStreetMap/Maps corporativo)
             dados_mapa = pd.DataFrame({"lat": [st.session_state.latitude_mapa], "lon": [st.session_state.longitude_mapa]})
             st.map(dados_mapa, zoom=12, use_container_width=True)
+            
+        # SE FOR OUTRA ABA: Renderiza as perguntas normais em blocos duplos
+        else:
+            perguntas = bloco["perguntas"]
+            # Calcula o contador dinâmico pulando o bloco de mapeamento para não quebrar a contagem matemática
+            blocos_anteriores_perguntas = [b for b in blocos_ativos[:st.session_state.bloco_atual_index] if b["titulo"] != "Mapeamento"]
+            contador_item = 1 + sum(len(b["perguntas"]) for b in blocos_anteriores_perguntas)
+            
+            for idx in range(0, len(perguntas), 2):
+                col1, col2 = st.columns(2)
+                with col1:
+                    p1 = perguntas[idx]
+                    indice_real = BLOCOS.index(bloco)
+                    v1 = renderizar_pergunta(p1, indice_real, idx, contador_item)
+                    contador_item += 1
+                    if v1: 
+                        st.session_state.respostas_acumuladas[p1["chave"]] = v1
+                with col2:
+                    if idx + 1 < len(perguntas):
+                        p2 = perguntas[idx + 1]
+                        indice_real = BLOCOS.index(bloco)
+                        v2 = renderizar_pergunta(p2, indice_real, idx + 1, contador_item)
+                        contador_item += 1
+                        if v2: 
+                            st.session_state.respostas_acumuladas[p2["chave"]] = v2
+                    
+                if idx + 2 < len(perguntas):
+                    st.divider()
 
     # 🎛️ BOTÕES DE NAVEGAÇÃO INTERNA DO CARD
     st.markdown("<br>", unsafe_allow_html=True)
@@ -610,7 +598,7 @@ def main() -> None:
         else:
             gerar_final = st.button("🌿 Emitir Relatório", key="btn_gerar_final_aba", type="primary", use_container_width=True)
             if gerar_final:
-                faltando = validar_respostas(st.session_state.respostas_acumuladas, blocos_ativos)
+                faltando = validar_respostas(st.session_state.respostas_acumuladas, [b for b in blocos_ativos if b["titulo"] != "Mapeamento"])
                 if faltando:
                     st.error(f"⚠️ Por favor, preencha todos os itens obrigatórios antes de gerar. Pendentes: {', '.join(faltando)}")
                 else:
@@ -626,7 +614,7 @@ def main() -> None:
                         pdf_fallback.cell(0, 10, "DIAGNOSTICO ESTRATEGICO - RELATORIO TECNICO DE SUPORTE", ln=True, align="C")
                         pdf_fallback.ln(5)
                         pdf_fallback.set_font("Arial", "", 10)
-                        pdf_fallback.cell(0, 8, f"Nivel Avaliado: {avaliar_maturidade(st.session_state.respostas_acumuladas)[0]}", ln=True)
+                        pdf_fallback.cell(0, 8, f"Nivel Evaluado: {avaliar_maturidade(st.session_state.respostas_acumuladas)[0]}", ln=True)
                         st.session_state.pdf_data = pdf_fallback.output(dest='S').encode('latin-1')
                         
                     st.session_state.relatorio_gerado = True
