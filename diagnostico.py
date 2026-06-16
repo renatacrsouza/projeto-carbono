@@ -4,9 +4,9 @@
 import os
 from typing import Any
 from fpdf import FPDF
-import streamlit as st
 import time  # Garanta que tem este import no topo do arquivo
 from google import genai  # 🟢 Biblioteca nova e pura
+import streamlit as st  # 🟢 ADICIONE ESSA LINHA NA LINHA 1 DO DIAGNOSTICO.PY
 
 
 def obter(respostas: dict[str, str], chave: str) -> str:

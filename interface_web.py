@@ -217,46 +217,71 @@ def aplicar_estilo() -> None:
                 color: #1D1D1F;
                 background-color: #F5F5F7;
             }
+            
+            /* 🏰 HEADER PRINCIPAL ULTRA CLEAN */
             .main-header { 
                 background: #FFFFFF; 
-                padding: 2rem; 
-                border-radius: 20px; 
+                padding: 1.8rem 2.2rem; 
+                border-radius: 24px; 
                 text-align: left; 
-                margin-bottom: 2rem; 
+                margin-bottom: 1.5rem; 
                 border: 1px solid #E5E5EA;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+                box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01);
             }
             .main-header h1 { font-size: 2.2rem; font-weight: 700; margin: 0; color: #1D1D1F !important; }
             .main-header p { font-size: 1.1rem; color: #86868B; margin-top: 0.4rem; }
             
-            .bloco-card { 
-                background: #FFFFFF; 
-                border: 1px solid #E5E5EA; 
-                border-radius: 24px; 
-                padding: 2rem; 
-                margin-bottom: 1.5rem; 
-                box-shadow: 0 8px 30px rgba(0,0,0,0.02);
+            /* 📦 CARTÕES DE PERGUNTA ESTILO BOUTIQUE (Mais compactos e sofisticados) */
+            div[data-testid="stVerticalBlockBorderWrapper"] {
+                border-radius: 20px !important;
+                background-color: #FFFFFF !important;
+                border: 1px solid #E5E5EA !important;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.01) !important;
+                padding: 1.5rem !important;
+                margin-bottom: 1rem !important;
             }
+            
+            /* 🏷️ TAGS DE ITEM EM VERDE BOTÂNICO DISCRETO */
             .pergunta-num { 
                 display: inline-block; 
-                background: #F5F5F7; 
-                color: #1D1D1F; 
-                font-weight: 600; 
-                font-size: 0.75rem; 
-                padding: 0.3rem 0.8rem; 
-                border-radius: 30px; 
-                margin-bottom: 0.6rem;
-                border: 1px solid #D1D1D6;
+                background: #EBF5EE; 
+                color: #1B4332; 
+                font-weight: 700; 
+                font-size: 0.7rem; 
+                letter-spacing: 0.05em;
+                padding: 0.25rem 0.7rem; 
+                border-radius: 8px; 
+                margin-bottom: 0.8rem;
+                text-transform: uppercase;
             }
+            
+            /* ✍️ AJUSTE DOS TÍTULOS DAS PERGUNTAS */
+            h5 {
+                font-weight: 600 !important;
+                color: #1D1D1F !important;
+                font-size: 1.05rem !important;
+                margin-bottom: 0.8rem !important;
+                line-height: 1.4 !important;
+            }
+            
+            /* 🔘 DESIGN DOS BOTÕES DE RÁDIO E CHECKBOXES */
+            div[data-testid="stRadio"] label, div[data-testid="stCheckbox"] label {
+                font-size: 0.95rem !important;
+                color: #323234 !important;
+            }
+            
+            /* 📊 DEMAIS ELEMENTOS DO RELATÓRIO */
             .relatorio-header { background: #1B4332; color: white; padding: 2.5rem; border-radius: 24px; text-align: center; margin-top: 3rem; }
             .relatorio-header h2 { color: white !important; margin: 0; font-size: 1.8rem; font-weight: 700; }
             .metric-card { background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 20px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.01); }
             .passo-item { background: #F5F5F7; border-left: 5px solid #1B4332; padding: 1rem; border-radius: 0 16px 16px 0; margin: 0.6rem 0; font-size: 1rem; }
             
-            .stTabs [data-baseweb="tab-list"] { gap: 8px; }
-            .stTabs [data-baseweb="tab"] { background: #FFFFFF; border-radius: 12px; padding: 10px 20px; font-weight: 500; color: #1D1D1F !important; border: 1px solid #E5E5EA; }
-            .stTabs [aria-selected="true"] { background: #1D1D1F !important; color: #FFFFFF !important; border-color: #1D1D1F !important; }
+            /* 📑 ABAS SUPERIORES (TABS) */
+            .stTabs [data-baseweb="tab-list"] { gap: 6px; }
+            .stTabs [data-baseweb="tab"] { background: #FFFFFF; border-radius: 12px; padding: 8px 16px; font-weight: 500; color: #86868B !important; border: 1px solid #E5E5EA; }
+            .stTabs [aria-selected="true"] { background: #1D1D1F !important; color: #FFFFFF !important; border-color: #1D1D1F !important; font-weight: 600; }
             
+            /* 🔵 BOTÃO PRINCIPAL DE EMISSÃO */
             div.stButton > button[kind="primary"] { 
                 background: #0071E3; 
                 border: none; 
@@ -283,22 +308,18 @@ def aplicar_estilo() -> None:
             }
 
             /* 🎯 COMPACTAÇÃO DA IA (BARRA LATERAL) */
-            /* Diminui o espaçamento interno geral da barra lateral */
             [data-testid="stSidebarUserContent"] {
                 padding-top: 1.5rem !important;
                 padding-bottom: 1rem !important;
-                gap: 0.5rem !important;
+                gap: 0.4rem !important;
             }
-            /* Reduz a distância gerada pelas linhas divisórias (<hr>) */
             [data-testid="stSidebar"] hr {
-                margin: 0.8rem 0 !important;
+                margin: 0.6rem 0 !important;
             }
-            /* Junta os balões de mensagens do chat para não ficarem tão distantes */
             [data-testid="stSidebar"] [data-testid="stChatMessage"] {
                 padding: 0.6rem 0.8rem !important;
                 margin-bottom: 0.4rem !important;
             }
-            /* Remove os espaços em branco vazios criados automaticamente pelo Streamlit */
             [data-testid="stSidebar"] [data-testid="element-container"] {
                 margin-bottom: 0.2rem !important;
             }
@@ -306,7 +327,6 @@ def aplicar_estilo() -> None:
         """,
         unsafe_allow_html=True,
     )
-
 def extrair_numero_pergunta(chave: str) -> str:
     return chave.split(".")[0].strip()
 
