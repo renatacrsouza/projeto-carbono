@@ -218,7 +218,7 @@ def aplicar_estilo() -> None:
                 background-color: #F5F5F7;
             }
             
-            /* 🏰 HEADER PRINCIPAL ULTRA CLEAN */
+            /* 🏰 HEADER PRINCIPAL */
             .main-header { 
                 background: #FFFFFF; 
                 padding: 1.8rem 2.2rem; 
@@ -231,57 +231,54 @@ def aplicar_estilo() -> None:
             .main-header h1 { font-size: 2.2rem; font-weight: 700; margin: 0; color: #1D1D1F !important; }
             .main-header p { font-size: 1.1rem; color: #86868B; margin-top: 0.4rem; }
             
-            /* 📦 CARTÕES DE PERGUNTA ESTILO BOUTIQUE (Mais compactos e sofisticados) */
-            div[data-testid="stVerticalBlockBorderWrapper"] {
+            /* 📦 TRUQUE MÁGICO: Força TODAS as caixas de perguntas (st.container) a virarem cartões Premium */
+            .stVerticalBlock[style*="border"] {
                 border-radius: 20px !important;
                 background-color: #FFFFFF !important;
                 border: 1px solid #E5E5EA !important;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.01) !important;
-                padding: 1.5rem !important;
+                padding: 1.8rem !important;
+                margin-bottom: 1.2rem !important;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.02) !important;
+            }
+            
+            /* 🟢 TAGS DE ITEM EM VERDE BOTÂNICO (Forçado por classe) */
+            .pergunta-num { 
+                display: inline-block !important; 
+                background-color: #EBF5EE !important; 
+                color: #1B4332 !important; 
+                font-weight: 700 !important; 
+                font-size: 0.75rem !important; 
+                letter-spacing: 0.06em !important;
+                padding: 0.3rem 0.8rem !important; 
+                border-radius: 8px !important; 
+                margin-bottom: 0.5rem !important;
+                border: 1px solid #D2E7D6 !important;
+            }
+            
+            /* ✍️ PERGUNTAS MAIS EM DESTAQUE */
+            h5 {
+                font-weight: 700 !important;
+                color: #1D1D1F !important;
+                font-size: 1.1rem !important;
+                margin-top: 0.2rem !important;
                 margin-bottom: 1rem !important;
             }
             
-            /* 🏷️ TAGS DE ITEM EM VERDE BOTÂNICO DISCRETO */
-            .pergunta-num { 
-                display: inline-block; 
-                background: #EBF5EE; 
-                color: #1B4332; 
-                font-weight: 700; 
-                font-size: 0.7rem; 
-                letter-spacing: 0.05em;
-                padding: 0.25rem 0.7rem; 
-                border-radius: 8px; 
-                margin-bottom: 0.8rem;
-                text-transform: uppercase;
+            /* 🔘 ESPAÇAMENTO DOS BOTÕES DE OPÇÃO */
+            div[data-testid="stWidgetLabel"] {
+                margin-bottom: 0.5rem !important;
             }
             
-            /* ✍️ AJUSTE DOS TÍTULOS DAS PERGUNTAS */
-            h5 {
-                font-weight: 600 !important;
-                color: #1D1D1F !important;
-                font-size: 1.05rem !important;
-                margin-bottom: 0.8rem !important;
-                line-height: 1.4 !important;
-            }
-            
-            /* 🔘 DESIGN DOS BOTÕES DE RÁDIO E CHECKBOXES */
-            div[data-testid="stRadio"] label, div[data-testid="stCheckbox"] label {
-                font-size: 0.95rem !important;
-                color: #323234 !important;
-            }
-            
-            /* 📊 DEMAIS ELEMENTOS DO RELATÓRIO */
+            /* 📊 DEMAIS ELEMENTOS */
             .relatorio-header { background: #1B4332; color: white; padding: 2.5rem; border-radius: 24px; text-align: center; margin-top: 3rem; }
             .relatorio-header h2 { color: white !important; margin: 0; font-size: 1.8rem; font-weight: 700; }
             .metric-card { background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 20px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.01); }
             .passo-item { background: #F5F5F7; border-left: 5px solid #1B4332; padding: 1rem; border-radius: 0 16px 16px 0; margin: 0.6rem 0; font-size: 1rem; }
             
-            /* 📑 ABAS SUPERIORES (TABS) */
             .stTabs [data-baseweb="tab-list"] { gap: 6px; }
             .stTabs [data-baseweb="tab"] { background: #FFFFFF; border-radius: 12px; padding: 8px 16px; font-weight: 500; color: #86868B !important; border: 1px solid #E5E5EA; }
             .stTabs [aria-selected="true"] { background: #1D1D1F !important; color: #FFFFFF !important; border-color: #1D1D1F !important; font-weight: 600; }
             
-            /* 🔵 BOTÃO PRINCIPAL DE EMISSÃO */
             div.stButton > button[kind="primary"] { 
                 background: #0071E3; 
                 border: none; 
@@ -291,38 +288,16 @@ def aplicar_estilo() -> None:
                 border-radius: 16px; 
                 width: 100%; 
             }
-            div.stButton > button[kind="primary"]:hover { background: #0077ED; }
 
-            /* 🪄 TRUQUE DO ESPELHO: Move a barra lateral para o canto direito */
-            [data-testid="stSidebar"] {
-                left: auto !important;
-                right: 0 !important;
-                transform: translate3d(0px, 0px, 0px) !important;
-            }
-            [data-testid="stAppViewContainer"] {
-                flex-direction: row-reverse !important;
-            }
-            [data-testid="stSidebarCollapseButton"] {
-                left: auto !important;
-                right: 10px !important;
-            }
+            /* 🪄 BARRA LATERAL FIXA À DIREITA */
+            [data-testid="stSidebar"] { left: auto !important; right: 0 !important; transform: translate3d(0px, 0px, 0px) !important; }
+            [data-testid="stAppViewContainer"] { flex-direction: row-reverse !important; }
+            [data-testid="stSidebarCollapseButton"] { left: auto !important; right: 10px !important; }
 
-            /* 🎯 COMPACTAÇÃO DA IA (BARRA LATERAL) */
-            [data-testid="stSidebarUserContent"] {
-                padding-top: 1.5rem !important;
-                padding-bottom: 1rem !important;
-                gap: 0.4rem !important;
-            }
-            [data-testid="stSidebar"] hr {
-                margin: 0.6rem 0 !important;
-            }
-            [data-testid="stSidebar"] [data-testid="stChatMessage"] {
-                padding: 0.6rem 0.8rem !important;
-                margin-bottom: 0.4rem !important;
-            }
-            [data-testid="stSidebar"] [data-testid="element-container"] {
-                margin-bottom: 0.2rem !important;
-            }
+            /* 🎯 COMPACTAÇÃO DA IA */
+            [data-testid="stSidebarUserContent"] { padding-top: 1.5rem !important; padding-bottom: 1rem !important; gap: 0.4rem !important; }
+            [data-testid="stSidebar"] hr { margin: 0.6rem 0 !important; }
+            [data-testid="stSidebar"] [data-testid="stChatMessage"] { padding: 0.6rem 0.8rem !important; margin-bottom: 0.4rem !important; }
         </style>
         """,
         unsafe_allow_html=True,
