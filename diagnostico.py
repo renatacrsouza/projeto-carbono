@@ -5,7 +5,7 @@ import os
 from typing import Any
 from fpdf import FPDF
 import streamlit as st
-from google import genai
+from google import genai  # 🟢 Biblioteca nova e pura
 
 
 def obter(respostas: dict[str, str], chave: str) -> str:
@@ -56,7 +56,6 @@ def avaliar_maturidade(respostas: dict[str, str]) -> tuple[str, str]:
         else:
             pontos += 0
 
-    # Lógica adaptada para frentes dinâmicas
     if "21. Faixa de Emissões Anuais" in respostas:
         docs_territoriais = obter(respostas, "19. Documentação Territorial Obrigatória")
         if docs_territoriais and docs_territoriais != "Não informado":
@@ -142,15 +141,18 @@ def chamar_inteligencia_artificial(respostas: dict[str, str], nivel: str, percen
         )
         
     try:
-        # 🟢 ATUALIZAÇÃO: Nova forma oficial de conectar usando a biblioteca moderna
-        client = genai.Client(api_key=api_key)
+        # 🟢 CORREÇÃO: Forçando a API estável aqui também!
+        client = genai.Client(
+            api_key=api_key,
+            http_options={'api_version': 'v1'}
+        )
         
         prompt = f"""
         Atue como um Auditor Senior Internacional de Créditos de Carbono...
         """
         
         response = client.models.generate_content(
-            model='gemini-1.5-flash',  # 🟢 CORREÇÃO: Tirar o "models/" daqui também!
+            model='gemini-1.5-flash',
             contents=prompt,
         )
         return response.text.strip()

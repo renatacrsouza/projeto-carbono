@@ -419,15 +419,19 @@ def main() -> None:
                         api_key = st.secrets.get("GEMINI_API_KEY")
                         
                         if api_key:
-                            client = genai.Client(api_key=api_key)
+                            # 🟢 CORREÇÃO: Forçando a biblioteca nova a usar a API estável, ignorando o v1beta da chave!
+                            client = genai.Client(
+                                api_key=api_key,
+                                http_options={'api_version': 'v1'}
+                            )
                             
                             contexto_prompt = (
                                 "Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. "
-                                f"Responda de forma corta, clara e direta à seguinte dúvida: {pergunta_usuario}"
+                                f"Responda de forma curta, clara e direta à seguinte dúvida: {pergunta_usuario}"
                             )
                             
                             resposta = client.models.generate_content(
-                                model='gemini-1.5-flash',  # 🟢 CORREÇÃO: Tirar o "models/" daqui!
+                                model='gemini-1.5-flash',
                                 contents=contexto_prompt,
                             )
                             texto_resposta = resposta.text
