@@ -419,7 +419,6 @@ def main() -> None:
                         api_key = st.secrets.get("GEMINI_API_KEY")
                         
                         if api_key:
-                            # 🟢 CORREÇÃO: Forçando a biblioteca nova a usar a API estável, ignorando o v1beta da chave!
                             client = genai.Client(
                                 api_key=api_key,
                                 http_options={'api_version': 'v1'}
@@ -430,8 +429,9 @@ def main() -> None:
                                 f"Responda de forma curta, clara e direta à seguinte dúvida: {pergunta_usuario}"
                             )
                             
+                            # 🟢 CORREÇÃO: Usando a nomenclatura de produção oficial para a API v1
                             resposta = client.models.generate_content(
-                                model='gemini-1.5-flash',
+                                model='gemini-2.5-flash',
                                 contents=contexto_prompt,
                             )
                             texto_resposta = resposta.text

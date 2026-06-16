@@ -141,7 +141,6 @@ def chamar_inteligencia_artificial(respostas: dict[str, str], nivel: str, percen
         )
         
     try:
-        # 🟢 CORREÇÃO: Forçando a API estável aqui também!
         client = genai.Client(
             api_key=api_key,
             http_options={'api_version': 'v1'}
@@ -151,8 +150,9 @@ def chamar_inteligencia_artificial(respostas: dict[str, str], nivel: str, percen
         Atue como um Auditor Senior Internacional de Créditos de Carbono...
         """
         
+        # 🟢 CORREÇÃO: Alinhando o modelo de produção oficial aqui também!
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-2.5-flash',
             contents=prompt,
         )
         return response.text.strip()
