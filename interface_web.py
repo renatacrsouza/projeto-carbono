@@ -39,7 +39,7 @@ def gerar_template_pdf() -> bytes:
 
 # ── 2. ESTRUTURA DOS BLOCOS ──────────────────────────────────────────────────
 BLOCOS = [
-    {"titulo": "Identificação", "subtitulo": "01 · IDENTIFICAÇÃO DO PROJETO", "icone": "🌿", "perguntas": [
+    {"titulo": "Identificação", "subtitulo": "01 · IDENTIFICAÇÃO", "icone": "🌿", "perguntas": [
         {"chave": "1. Tipo principal do projeto", "texto": "Tipo principal?", "opcoes": ["Florestal", "Agropecuário", "Energia", "Outro"]},
         {"chave": "2. Bioma", "texto": "Bioma/Região?", "opcoes": ["Amazônia", "Cerrado", "Mata Atlântica", "Outro"]},
     ]},
@@ -67,31 +67,74 @@ BLOCOS = [
     {"titulo": "CAR", "subtitulo": "09 · RESTRIÇÕES CAR", "icone": "🗺️", "perguntas": [
         {"chave": "23. Sobreposição", "texto": "Sobreposição?", "opcoes": ["Não", "Sim"]},
     ]},
-    # 🗺️ MAPA AGORA É A ÚLTIMA ABA
     {"titulo": "Mapeamento", "subtitulo": "10 · MAPEAMENTO GEOGRÁFICO", "icone": "📍", "perguntas": []}
 ]
 
-# ── 3. LÓGICA DE EXECUÇÃO (MAIN) ──────────────────────────────────────────────
-def main() -> None:
+# ── 3. FUNÇÕES DE ESTILO E RENDERIZAÇÃO ──────────────────────────────────────
+def aplicar_estilo():
+    st.markdown("""<style>
+        .main-header { background: #FFFFFF; padding: 1.8rem; border-radius: 24px; border: 1px solid #E5E5EA; margin-bottom: 1.5rem; }
+        .stVerticalBlock[style*="border"] { border-radius: 20px !important; background-color: #FFFFFF !important; padding: 1.8rem !important; }
+    </style>""", unsafe_allow_html=True)
+
+def renderizar_pergunta(p, b_idx, p_idx, seq):
+    key = f"b{b_idx}_q{p_idx}"
+    valor = st.session_state.respostas_acumuladas.get(p["chave"], None)
+    st.markdown(f"##### {p['texto']}")
+    return st.radio("Opções:", p["opcoes"], index=p["opcoes"].index(valor) if valor in p["opcoes"] else None, key=f"{key}_radio", label_visibility="collapsed")
+
+# ── 4. FUNÇÃO PRINCIPAL ──────────────────────────────────────────────────────
+def main():
     st.set_page_config(page_title="Carbon Diagnosis", layout="wide")
+    aplicar_estilo()
     
     if "respostas_acumuladas" not in st.session_state: st.session_state.respostas_acumuladas = {}
     if "bloco_atual_index" not in st.session_state: st.session_state.bloco_atual_index = 0
     if "latitude_mapa" not in st.session_state: st.session_state.latitude_mapa = -23.2641
+    if "longitude_mapa" not in st.session_state: st.session_state.longitude_mapa = -47.2992
+
+    st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1></div>', unsafe_allow_html=True)
+
+    # Lógica de Jornada
+    jornada = st.radio("Jornada:", ["✨ Estruturar do zero", "🔍 Validar ativo"], horizontal=True)
+    blocos_ativos = [BLOCOS[0], BLOCOS[2], BLOCOS[3], BLOCOS[4], BLOCOS[5], BLOCOS[6], BLOCOS[7], BLOCOS[8], BLOCOS[9], BLOCOS[1]] if "Estruturar" in jornada else [BLOCOS[0], BLOCOS[2], BLOCOS[6], BLOCOS[7], BLOCOS[8], BLOCOS[9], BLOCOS[1]]
+
+    # Barra de Progresso
+    prog = len(st.session_state.respostas_acumuladas) / sum(len(b["perguntas"]) for b in blocos_ativos if b["titulo"] != "Mapeamento")
+    st.progress(min(prog, 1.0))
+
+    # Blocos e Mapa
+    bloco = blocos_ativos[st.session_state.bloco_atual_index]
+    st.markdown(f"#### {bloco['subtitulo']}")
     
-    # Renderização da barra de passos e conteúdo...
-    # (Copie aqui a sua lógica de navegação e botões que testamos)
-    
-    # No final do último bloco:
-    if st.session_state.bloco_atual_index == len(BLOCOS) - 1:
-        if st.button("🌿 Emitir Relatório", type="primary"):
-            # Lógica com tratamento de erro 429
-            try:
-                st.session_state.pdf_data = gerar_relatorio_pdf(st.session_state.respostas_acumuladas)
-            except Exception:
-                pdf = FPDF(); pdf.add_page(); pdf.cell(0,10, "Relatório Técnico Offline", ln=True)
-                st.session_state.pdf_data = pdf.output(dest='S')
+    with st.container(border=True):
+        if bloco["titulo"] == "Mapeamento":
+            c1, c2 = st.columns(2)
+            st.session_state.latitude_mapa = c1.number_input("Lat", value=st.session_state.latitude_mapa, format="%.4f")
+            st.session_state.longitude_mapa = c2.number_input("Lon", value=st.session_state.longitude_mapa, format="%.4f")
+            st.map(pd.DataFrame({"lat": [st.session_state.latitude_mapa], "lon": [st.session_state.longitude_mapa]}))
+        else:
+            for idx, p in enumerate(bloco["perguntas"]):
+                res = renderizar_pergunta(p, BLOCOS.index(bloco), idx, idx+1)
+                if res: st.session_state.respostas_acumuladas[p["chave"]] = res
+
+    # Navegação
+    c1, c2, c3 = st.columns([1, 2, 1])
+    if c1.button("⬅️ Anterior") and st.session_state.bloco_atual_index > 0:
+        st.session_state.bloco_atual_index -= 1
+        st.rerun()
+    if c3.button("Próximo ➡️") and st.session_state.bloco_atual_index < len(blocos_ativos) - 1:
+        st.session_state.bloco_atual_index += 1
+        st.rerun()
+    elif c3.button("🌿 Emitir Relatório"):
+        try:
+            st.session_state.pdf_data = gerar_relatorio_pdf(st.session_state.respostas_acumuladas)
             st.session_state.relatorio_gerado = True
+        except Exception:
+            st.error("Erro na IA. Relatório gerado localmente.")
+    
+    if st.session_state.get("relatorio_gerado"):
+        exibir_relatorio(st.session_state.respostas_acumuladas, st.session_state.pdf_data)
 
 if __name__ == "__main__":
     main()
