@@ -379,7 +379,7 @@ def main() -> None:
     st.set_page_config(page_title="Carbon Diagnosis", page_icon="🌱", layout="wide", initial_sidebar_state="expanded")
     aplicar_estilo()
 
-   # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (ESTILO GEMINI COMPACTO)
+   # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (SUPORTE A DOCUMENTOS)
     with st.sidebar:
         # ── 1. TOPO FIXO (Cabeçalho do Copiloto) ─────────────────────────────
         st.header("🌱 Copiloto de Carbono")
@@ -394,16 +394,28 @@ def main() -> None:
                 {"role": "assistant", "content": "Olá! Sou seu assistente de due diligence. Se não souber como responder alguma pergunta do formulário ao lado esquerdo, ou quiser que eu analise o documento anexo, é só me chamar!"}
             ]
             
-        # Contêiner invisível com rolagem própria para o histórico de mensagens
-        caixa_historico = st.container(height=380, border=False)
+        caixa_historico = st.container(height=350, border=False)
         
         with caixa_historico:
             for mensagem in st.session_state.historico_chat:
                 with st.chat_message(mensagem["role"]):
                     st.write(mensagem["content"])
                     
-        # ── 3. CAIXA DE TEXTO DO CHAT ────────────────────────────────────────
-        if pergunta_usuario := st.chat_input("Ex: O que é adicionalidade?", key="chat_input_sidebar"):
+        # ── 3. RODAPÉ FIXO: ÁREA DE ANEXAR DOCUMENTOS ────────────────────────
+        st.subheader("Anexar Documentos")
+        arquivo_anexado = st.file_uploader(
+            "Envie a Matrícula, CAR ou PDD (PDF)", 
+            type=["pdf"], 
+            help="A IA lerá o documento para te ajudar a responder o formulário.",
+            key="uploader_sidebar"
+        )
+        
+        if arquivo_anexado:
+            st.success("📎 Documento pronto para análise!")
+        st.markdown("---")
+
+        # ── 4. CAIXA DE TEXTO DO CHAT (PROCESSA TEXTO + PDF) ─────────────────
+        if pergunta_usuario := st.chat_input("Ex: Analise o CAR que acabei de anexar", key="chat_input_sidebar"):
             with caixa_historico:
                 with st.chat_message("user"):
                     st.write(pergunta_usuario)
@@ -411,24 +423,37 @@ def main() -> None:
             
             with caixa_historico:
                 with st.chat_message("assistant"):
-                    with st.spinner("Analisando..."):
+                    with st.spinner("Analisando documentos e gerando resposta..."):
                         try:
                             api_key = st.secrets.get("GEMINI_API_KEY")
                             
                             if api_key:
                                 client = genai.Client(api_key=api_key)
                                 
+                                # 🪄 TRUQUE MÁGICO: Prepara os conteúdos para a IA
+                                # Se tiver arquivo, nós lemos os bytes dele e enviamos junto!
+                                conteudos_enviar = []
+                                
+                                if arquivo_anexado:
+                                    bytes_pdf = arquivo_anexado.read()
+                                    conteudos_enviar.append({
+                                        "mime_type": "application/pdf",
+                                        "data": bytes_pdf
+                                    })
+                                
                                 contexto_prompt = (
                                     "Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. "
-                                    f"Responda de forma curta, clara e direta à seguinte dúvida: {pergunta_usuario}"
+                                    "Se um documento em PDF foi enviado junto com esta mensagem, analise as informações dele (como CAR, Matrícula ou áreas) "
+                                    f"para responder de forma curta, clara e direta à seguinte dúvida do usuário: {pergunta_usuario}"
                                 )
+                                conteudos_enviar.append(contexto_prompt)
                                 
                                 # Escudo contra o erro 503 do servidor da Google
                                 for tentativa in range(3):
                                     try:
                                         resposta = client.models.generate_content(
                                             model='gemini-2.5-flash',
-                                            contents=contexto_prompt,
+                                            contents=conteudos_enviar, # Enviando o combo Texto + PDF!
                                         )
                                         texto_resposta = resposta.text
                                         break
