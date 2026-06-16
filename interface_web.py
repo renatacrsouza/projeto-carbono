@@ -109,7 +109,7 @@ def gerar_template_pdf() -> bytes:
             pdf.cell(190, 5.5, "__________________________________________________________________________________________", ln=True)
             pdf.ln(1)
             
-    return pdf.output(dest='S').encode('latin-1')
+    return pdf.output(dest='S')
 
 
 # ── Estrutura do questionário ────────────────────────────────────────────────
