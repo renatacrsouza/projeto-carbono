@@ -418,9 +418,9 @@ def main() -> None:
         caixa_historico = st.container(height=350, border=False)
         
         with caixa_historico:
-            for mensagem in st.session_state.historico_chat:
-                with st.chat_message(mensagem["role"]):
-                    st.write(mensagem["content"])
+            for message in st.session_state.historico_chat:
+                with st.chat_message(message["role"]):
+                    st.write(message["content"])
                     
         # ── 3. CAIXA DE TEXTO DO CHAT (DIGITAÇÃO LIVRE) ───────────────────────
         texto_digitado = st.chat_input("Ex: O que é adicionalidade? Ou analise o anexo...", key="chat_input_sidebar")
@@ -454,15 +454,14 @@ def main() -> None:
                             if api_key:
                                 client = genai.Client(api_key=api_key)
                                 
-                                # Prompt estruturado conforme padrões internacionais de Due Diligence e Compliance[cite: 2, 3, 4, 7, 10]
                                 contexto_prompt = (
                                     "Você é o Copiloto de Carbono, um especialista sênior em Due Diligence e estruturação de projetos de crédito de carbono no Brasil. "
                                     "Sua missão é analisar as dúvidas do usuário e os documentos anexados (como CAR, Matrículas ou Inventários) com base rigorosa nas seguintes referências:\n"
-                                    "1. GHG Protocol: Classifique e oriente sobre limites organizacionais e escopos de emissão (Escopos 1, 2 e 3)[cite: 3, 7].\n"
-                                    "2. Diretrizes AFOLU: Avalie critérios de elegibilidade do solo, histórico de desmatamento/reflorestamento (ARR/REDD+) e o risco de Vazamento (Leakage)[cite: 10].\n"
-                                    "3. Adicionalidade (MDL): Avalie se a atividade proposta demonstra barreira financeira, tecnológica ou regulatória, comprovando que o projeto não ocorreria sem o incentivo dos créditos[cite: 2, 4, 6].\n"
-                                    "4. Manual de Verificadores: Seja criterioso com a consistência de dados. Exija perímetros digitais claros (arquivos KML/SHP) e consistência entre CAR e Matrícula[cite: 8].\n"
-                                    "5. Regulamentação SBCE: Oriente sobre o enquadramento no Sistema Brasileiro de Comércio de Emissões para quem emite acima de 25.000 tCO2e/ano[cite: 4, 7].\n\n"
+                                    "1. GHG Protocol: Classifique e oriente sobre limites organizacionais e escopos de emissão (Escopos 1, 2 e 3).\n"
+                                    "2. Diretrizes AFOLU: Avalie critérios de elegibilidade do solo, histórico de desmatamento/reflorestamento (ARR/REDD+) e o risco de Vazamento (Leakage).\n"
+                                    "3. Adicionalidade (MDL): Avalie se a atividade proposta demonstrates barreira financeira, tecnológica ou regulatória, comprovando que o projeto não ocorreria sem o incentivo dos créditos.\n"
+                                    "4. Manual de Verificadores: Seja criterioso com a consistência de dados. Exija perímetros digitais claros (arquivos KML/SHP) e consistência entre CAR e Matrícula.\n"
+                                    "5. Regulamentação SBCE: Oriente sobre o enquadramento no Sistema Brasileiro de Comércio de Emissões para quem emite acima de 25.000 tCO2e/ano.\n\n"
                                     "Responda de forma altamente profissional, porém clara, direta e executiva. Se houver um PDF anexado, use seus dados para fundamentar tecnicamente o diagnóstico.\n"
                                     f"Dúvida do usuário: {texto_digitado}"
                                 )
@@ -524,7 +523,11 @@ def main() -> None:
         st.session_state.pdf_data = b""
         st.session_state.respostas_finais = {}
 
-    # 🕹️ CONTROLADOR DA PÁGINA ATUAL (Garante que a mudança seja automática)
+    # 🕹️ INICIALIZA O ACUMULADOR DE RESPOSTAS NA SESSÃO (Evita arquivos em branco)
+    if "respostas_acumuladas" not in st.session_state:
+        st.session_state.respostas_acumuladas = {}
+
+    # 🕹️ CONTROLADOR DA PÁGINA ATUAL
     if "bloco_atual_index" not in st.session_state:
         st.session_state.bloco_atual_index = 0
 
@@ -537,12 +540,10 @@ def main() -> None:
     if st.session_state.bloco_atual_index >= len(blocos_ativos):
         st.session_state.bloco_atual_index = 0
 
-    # 🗺️ MENU DE NAVEGAÇÃO VISUAL PREMIUM (Estilo Apple Progressivo)
-    # Em vez de st.tabs que trava a tela, criamos um indicador de passos horizontal elegante
+    # 🗺️ MENU DE NAVEGAÇÃO VISUAL PREMIUM
     col_passos = st.columns(len(blocos_ativos))
     for idx_passo, b_passo in enumerate(blocos_ativos):
         with col_passos[idx_passo]:
-            # Destaca visualmente onde o usuário está no momento
             if idx_passo == st.session_state.bloco_atual_index:
                 st.markdown(f"<div style='text-align:center; border-bottom:3px solid #0071E3; padding-bottom:5px; font-weight:700;'>{b_passo['icone']} {b_passo['titulo']}</div>", unsafe_allow_html=True)
             else:
@@ -550,16 +551,14 @@ def main() -> None:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Captura o bloco ativo com base no botão que o usuário clicou
+    # Captura o bloco ativo
     bloco = blocos_ativos[st.session_state.bloco_atual_index]
-    respostas_parciais: dict[str, str] = {}
 
     # Renderiza o bloco de perguntas ativo na tela
     st.markdown(f"#### {bloco['subtitulo']}")
     
     with st.container(border=True):
         perguntas = bloco["perguntas"]
-        # Recalcula o contador global para manter os itens sequenciais perfeitos
         contador_item = 1 + sum(len(b["perguntas"]) for b in blocos_ativos[:st.session_state.bloco_atual_index])
         
         for idx in range(0, len(perguntas), 2):
@@ -571,7 +570,7 @@ def main() -> None:
                 v1 = renderizar_pergunta(p1, indice_real, idx, contador_item)
                 contador_item += 1
                 if v1: 
-                    respostas_parciais[p1["chave"]] = v1
+                    st.session_state.respostas_acumuladas[p1["chave"]] = v1
                     
             with col2:
                 if idx + 1 < len(perguntas):
@@ -580,12 +579,12 @@ def main() -> None:
                     v2 = renderizar_pergunta(p2, indice_real, idx + 1, contador_item)
                     contador_item += 1
                     if v2: 
-                        respostas_parciais[p2["chave"]] = v2
+                        st.session_state.respostas_acumuladas[p2["chave"]] = v2
                 
             if idx + 2 < len(perguntas):
                 st.divider()
 
-    # 🎛️ BOTÕES DE NAVEGAÇÃO AUTOMÁTICA NO RODAPÉ
+    # 🎛️ BOTÕES DE NAVEGAÇÃO AUTOMÁTICA COM SALVAMENTO NO RODAPÉ
     st.markdown("<br>", unsafe_allow_html=True)
     nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
     
@@ -603,28 +602,33 @@ def main() -> None:
         else:
             gerar_final = st.button("🌿 Emitir Relatório", key="btn_gerar_final_aba", type="primary", use_container_width=True)
             if gerar_final:
-                st.session_state.respostas_finais = respostas_parciais
-                st.session_state.pdf_data = gerar_relatorio_pdf(respostas_parciais)
-                st.session_state.relatorio_gerado = True
-                st.balloons()
+                faltando = validar_respostas(st.session_state.respostas_acumuladas, blocos_ativos)
+                if faltando:
+                    st.error(f"⚠️ Por favor, preencha todos os itens obrigatórios antes de gerar. Pendentes: {', '.join(faltando)}")
+                else:
+                    st.session_state.respostas_finais = st.session_state.respostas_acumuladas
+                    st.session_state.pdf_data = gerar_relatorio_pdf(st.session_state.respostas_acumuladas)
+                    st.session_state.relatorio_gerado = True
+                    st.balloons()
 
+    # Mantemos o painel de controle inferior atualizado com o status global coletado da sessão
     total_perguntas = sum(len(b["perguntas"]) for b in blocos_ativos)
-    respondidas = len(respostas_parciais)
+    respondidas = len(st.session_state.respostas_acumuladas)
     
     st.markdown("<br>", unsafe_allow_html=True)
     col_btn, col_info = st.columns([3, 1])
     with col_btn:
-        gerar = st.button("🌿 Analisar Viabilidade e Emitir Relatório", type="primary", use_container_width=True)
+        gerar = st.button("🌿 Analisar Viabilidade e Emitir Relatório Global", type="primary", use_container_width=True)
     with col_info:
         st.metric("Itens Respondidos", f"{respondidas}/{total_perguntas}")
 
     if gerar:
-        faltando = validar_respostas(respostas_parciais, blocos_ativos)
+        faltando = validar_respostas(st.session_state.respostas_acumuladas, blocos_ativos)
         if faltando:
             st.error(f"⚠️ Por favor, preencha todos os itens obrigatórios antes de gerar. Pendentes: {', '.join(faltando)}")
         else:
-            st.session_state.respostas_finais = respostas_parciais
-            st.session_state.pdf_data = gerar_relatorio_pdf(respostas_parciais)
+            st.session_state.respostas_finais = st.session_state.respostas_acumuladas
+            st.session_state.pdf_data = gerar_relatorio_pdf(st.session_state.respostas_acumuladas)
             st.session_state.relatorio_gerado = True
             st.balloons()
 
