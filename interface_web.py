@@ -20,7 +20,7 @@ from diagnostico import (
 
 
 def gerar_template_pdf() -> bytes:
-    """Gera o modelo de relatório completo em branco com 2 linhas simétricas por item."""
+    """Gera o modelo de relatório completo em bytes."""
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=10)
@@ -109,7 +109,10 @@ def gerar_template_pdf() -> bytes:
             pdf.cell(190, 5.5, "__________________________________________________________________________________________", ln=True)
             pdf.ln(1)
             
-    return pdf.output(dest='S')
+    output = pdf.output(dest='S')
+    if isinstance(output, str):
+        return output.encode('latin-1')
+    return output
 
 
 # ── Estrutura do questionário ────────────────────────────────────────────────
