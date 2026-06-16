@@ -381,23 +381,12 @@ def main() -> None:
 
     # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (COPILOTO IA)
     with st.sidebar:
+        # 1 ── Cabeçalho do Copiloto ──────────────────────────────────────────
         st.header("🌱 Copiloto de Carbono")
         st.caption("Tire suas dúvidas sobre as perguntas ou envie documentos para análise em tempo real.")
-        
-        # 📎 1. Área para Anexar Documentos
-        st.subheader("Anexar Documentos")
-        arquivo_anexado = st.file_uploader(
-            "Envie a Matrícula, CAR ou PDD (PDF)", 
-            type=["pdf"], 
-            help="A IA lerá o documento para te ajudar a responder o formulário."
-        )
-        
-        if arquivo_anexado:
-            st.success("Documento carregado com sucesso!")
-            
         st.markdown("---")
         
-        # 💬 2. Estrutura do Chat de Suporte na Tela
+        # 2 ── Chat de Suporte (Mensagens do Histórico) ───────────────────────
         st.subheader("Chat de Suporte")
         
         if "historico_chat" not in st.session_state:
@@ -405,11 +394,27 @@ def main() -> None:
                 {"role": "assistant", "content": "Olá! Sou seu assistente de due diligence. Se não souber como responder alguma pergunta do formulário ao lado esquerdo, ou quiser que eu analise o documento anexo, é só me chamar!"}
             ]
             
+        # Contêiner para renderizar o histórico na tela (Meio da barra)
         for mensagem in st.session_state.historico_chat:
             with st.chat_message(mensagem["role"]):
                 st.write(mensagem["content"])
                 
-        if pergunta_usuario := st.chat_input("Ex: O que é adicionalidade?"):
+        st.markdown("---")
+        
+        # 3 ── Anexar Documentos (Posicionado acima do campo de escrita) ──────
+        st.subheader("Anexar Documentos")
+        arquivo_anexado = st.file_uploader(
+            "Envie a Matrícula, CAR ou PDD (PDF)", 
+            type=["pdf"], 
+            help="A IA lerá o documento para te ajudar a responder o formulário.",
+            key="uploader_sidebar"
+        )
+        
+        if arquivo_anexado:
+            st.success("Documento carregado com sucesso!")
+            
+        # 4 ── Campo de Entrada Fixo no Rodapé ─────────────────────────────────
+        if pergunta_usuario := st.chat_input("Ex: O que é adicionalidade?", key="chat_input_sidebar"):
             with st.chat_message("user"):
                 st.write(pergunta_usuario)
             st.session_state.historico_chat.append({"role": "user", "content": pergunta_usuario})
@@ -427,7 +432,7 @@ def main() -> None:
                                 f"Responda de forma curta, clara e direta à seguinte dúvida: {pergunta_usuario}"
                             )
                             
-                            # 🛡️ Sistema de retry automático (3 tentativas se o Google oscilar)
+                            # 🛡️ Sistema de retry automático contra o erro 503
                             for tentativa in range(3):
                                 try:
                                     resposta = client.models.generate_content(
@@ -450,6 +455,9 @@ def main() -> None:
                     
                     st.write(texto_resposta)
                     st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
+                    
+                    # Atualiza a página suavemente para colar a resposta nova na tela
+                    st.rerun()
 
     # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
