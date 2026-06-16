@@ -403,6 +403,9 @@ def main() -> None:
 
     # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (ESTIUO GEMINI PREMIUM)
     with st.sidebar:
+       # ── 0. LOGOTIPO LOCAL DA EMPRESA ────────────────────────────────────
+        st.image("logo.png", use_container_width=True)
+        
         # ── 1. TOPO FIXO (Cabeçalho do Copiloto) ─────────────────────────────
         st.header("🌱 Copiloto de Carbono")
         st.caption("Tire suas dúvidas sobre as perguntas ou envie documentos para análise em tempo real.")
