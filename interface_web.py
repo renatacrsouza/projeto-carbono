@@ -7,7 +7,7 @@ from typing import Optional
 import streamlit as st
 from fpdf import FPDF
 from google import genai
-from google.genai import types  # 🟢 ADICIONE ESSA LINHA AQUI NO TOPO!
+from google.genai import types
 
 from diagnostico import (
     avaliar_maturidade,
@@ -99,6 +99,7 @@ def gerar_template_pdf() -> bytes:
         pdf.ln(2)
         
         for item in itens:
+            pdf.ln(1)
             pdf.set_font("Arial", "B", 9)
             pdf.set_text_color(27, 67, 50)
             pdf.cell(190, 5, item, ln=True)
@@ -302,12 +303,13 @@ def aplicar_estilo() -> None:
         """,
         unsafe_allow_html=True,
     )
+
+
 def extrair_numero_pergunta(chave: str) -> str:
     return chave.split(".")[0].strip()
 
 
 def renderizar_pergunta(pergunta: dict, indice_bloco: int, indice_pergunta: int, numero_sequencial: int) -> Optional[str]:
-    # 🟢 CORREÇÃO: Em vez de quebrar a string, usamos o número sequencial exato e contínuo
     key_base = f"b{indice_bloco}_q{indice_pergunta}"
 
     st.markdown(f'<span class="pergunta-num">ITEM {numero_sequencial}</span>', unsafe_allow_html=True)
@@ -350,7 +352,7 @@ def calcular_percentual_maturidade(respostas: dict[str, str]) -> int:
 
 
 def exibir_relatorio(respostas: dict[str, str], pdf_bytes: bytes) -> None:
-    nivel, maturidade_texto = avaliar_maturidade(respostas)
+    nivel, _ = avaliar_maturidade(respostas)
     percentual = calcular_percentual_maturidade(respostas)
     cor_texto, _ = CORES_MATURIDADE.get(nivel, ("#1B5E20", "#E8F5E9"))
     data = datetime.now().strftime("%d/%m/%Y às %H:%M")
@@ -392,15 +394,12 @@ def exibir_relatorio(respostas: dict[str, str], pdf_bytes: bytes) -> None:
 
 
 def main() -> None:
-    # 💎 AJUSTE: initial_sidebar_state como expanded garante o equilíbrio visual inicial da tela
     st.set_page_config(page_title="Carbon Diagnosis", page_icon="🌱", layout="wide", initial_sidebar_state="expanded")
     aplicar_estilo()
 
-    # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (ESTIUO GEMINI PREMIUM)
+    # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (ESTILO GEMINI PREMIUM)
     with st.sidebar:
-       # ── 0. LOGOTIPO DA EMPRESA (Tamanho Ajustado) ───────────────────────
-        # Mudamos de 'use_container_width=True' para 'width=100'
-        # Dica: Se o seu logo for muito vertical, tente 'width=80'. Se for horizontal, tente 'width=120'.
+        # ── 0. LOGOTIPO DA EMPRESA ───────────────────────────────────────
         st.image("logo.png", width=100)
         
         # ── 1. TOPO FIXO (Cabeçalho do Copiloto) ─────────────────────────────
@@ -413,10 +412,9 @@ def main() -> None:
         
         if "historico_chat" not in st.session_state:
             st.session_state.historico_chat = [
-                {"role": "assistant", "content": "Olá! Sou seu assistente de due diligence. Se não souber como responder alguma pergunta do formulário ao lado esquerdo, ou quiser que eu análise o documento anexo, é só me chamar!"}
+                {"role": "assistant", "content": "Olá! Sou seu assistente de due diligence. Se não souber como responder alguma pergunta do formulário ao lado esquerdo, ou quiser que eu analise o documento anexo, é só me chamar!"}
             ]
             
-        # Contêiner invisível com rolagem própria para as mensagens do chat
         caixa_historico = st.container(height=350, border=False)
         
         with caixa_historico:
@@ -427,7 +425,7 @@ def main() -> None:
         # ── 3. CAIXA DE TEXTO DO CHAT (DIGITAÇÃO LIVRE) ───────────────────────
         texto_digitado = st.chat_input("Ex: O que é adicionalidade? Ou analise o anexo...", key="chat_input_sidebar")
         
-        # ── 4. RODAPÉ FIXO (Área de Anexar Documentos posicionada embaixo da escrita) ──
+        # ── 4. RODAPÉ FIXO (Área de Anexar Documentos) ────────────────────────
         st.markdown("---")
         st.subheader("Anexar Documentos")
         arquivo_anexado = st.file_uploader(
@@ -440,15 +438,13 @@ def main() -> None:
         if arquivo_anexado:
             st.success("📎 Documento pronto para análise!")
 
-        # ── 5. PROCESSAMENTO DO ENVIO (TEXTO + PDF OPCIONAL) ──────────────────
+        # ── 5. PROCESSAMENTO DO ENVIO COM BASE NOS MANUAIS DE AUDITORIA ──────
         if texto_digitado:
-            # Exibe a pergunta do usuário no visor do chat imediatamente
             with caixa_historico:
                 with st.chat_message("user"):
                     st.write(texto_digitado)
             st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
             
-            # Dispara a chamada para o cérebro do Gemini
             with caixa_historico:
                 with st.chat_message("assistant"):
                     with st.spinner("Analisando e gerando resposta..."):
@@ -458,15 +454,20 @@ def main() -> None:
                             if api_key:
                                 client = genai.Client(api_key=api_key)
                                 
-                                # 🟢 AJUSTE DA LISTA: Começamos a lista diretamente com a nossa instrução em texto
+                                # Prompt estruturado conforme padrões internacionais de Due Diligence e Compliance[cite: 2, 3, 4, 7, 10]
                                 contexto_prompt = (
-                                    "Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. "
-                                    "Se um documento em PDF foi anexado a esta chamada, use os dados contidos nele para embasar sua resposta. "
-                                    f"Responda de forma curta, clara e direta à seguinte dúvida do usuário: {texto_digitado}"
+                                    "Você é o Copiloto de Carbono, um especialista sênior em Due Diligence e estruturação de projetos de crédito de carbono no Brasil. "
+                                    "Sua missão é analisar as dúvidas do usuário e os documentos anexados (como CAR, Matrículas ou Inventários) com base rigorosa nas seguintes referências:\n"
+                                    "1. GHG Protocol: Classifique e oriente sobre limites organizacionais e escopos de emissão (Escopos 1, 2 e 3)[cite: 3, 7].\n"
+                                    "2. Diretrizes AFOLU: Avalie critérios de elegibilidade do solo, histórico de desmatamento/reflorestamento (ARR/REDD+) e o risco de Vazamento (Leakage)[cite: 10].\n"
+                                    "3. Adicionalidade (MDL): Avalie se a atividade proposta demonstra barreira financeira, tecnológica ou regulatória, comprovando que o projeto não ocorreria sem o incentivo dos créditos[cite: 2, 4, 6].\n"
+                                    "4. Manual de Verificadores: Seja criterioso com a consistência de dados. Exija perímetros digitais claros (arquivos KML/SHP) e consistência entre CAR e Matrícula[cite: 8].\n"
+                                    "5. Regulamentação SBCE: Oriente sobre o enquadramento no Sistema Brasileiro de Comércio de Emissões para quem emite acima de 25.000 tCO2e/ano[cite: 4, 7].\n\n"
+                                    "Responda de forma altamente profissional, porém clara, direta e executiva. Se houver um PDF anexado, use seus dados para fundamentar tecnicamente o diagnóstico.\n"
+                                    f"Dúvida do usuário: {texto_digitado}"
                                 )
                                 conteudos_enviar = [contexto_prompt]
                                 
-                                # Se o usuário carregou um PDF, nós adicionamos ele DEPOIS do texto na lista
                                 if arquivo_anexado:
                                     bytes_pdf = arquivo_anexado.read()
                                     pdf_part = types.Part.from_bytes(
@@ -475,7 +476,6 @@ def main() -> None:
                                     )
                                     conteudos_enviar.append(pdf_part)
                                 
-                                # Escudo protetor contra erro 503 (3 tentativas automáticas)
                                 for tentativa in range(3):
                                     try:
                                         resposta = client.models.generate_content(
@@ -498,7 +498,6 @@ def main() -> None:
                         
                         st.write(texto_resposta)
             
-            # Grava a resposta no histórico persistente e recarrega a página de forma suave
             st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
             st.rerun()
 
@@ -534,7 +533,6 @@ def main() -> None:
     tabs = st.tabs(tab_labels)
     respostas_parciais: dict[str, str] = {}
 
-    # 🪄 CONTADOR INTELIGENTE: Começa no 1 e vai somando de 1 em 1 de forma contínua
     contador_item = 1
 
     for tab, bloco in zip(tabs, blocos_ativos):
@@ -549,7 +547,6 @@ def main() -> None:
                     with col1:
                         p1 = perguntas[idx]
                         indice_real = BLOCOS.index(bloco)
-                        # Passamos o contador_item e somamos +1 depois
                         v1 = renderizar_pergunta(p1, indice_real, idx, contador_item)
                         contador_item += 1
                         if v1: 
@@ -559,7 +556,6 @@ def main() -> None:
                         if idx + 1 < len(perguntas):
                             p2 = perguntas[idx + 1]
                             indice_real = BLOCOS.index(bloco)
-                            # Passamos o contador_item e somamos +1 depois
                             v2 = renderizar_pergunta(p2, indice_real, idx + 1, contador_item)
                             contador_item += 1
                             if v2: 
