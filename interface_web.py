@@ -403,8 +403,10 @@ def main() -> None:
 
     # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (ESTIUO GEMINI PREMIUM)
     with st.sidebar:
-       # ── 0. LOGOTIPO LOCAL DA EMPRESA ────────────────────────────────────
-        st.image("logo.png", use_container_width=True)
+       # ── 0. LOGOTIPO DA EMPRESA (Tamanho Ajustado) ───────────────────────
+        # Mudamos de 'use_container_width=True' para 'width=100'
+        # Dica: Se o seu logo for muito vertical, tente 'width=80'. Se for horizontal, tente 'width=120'.
+        st.image("logo.png", width=100
         
         # ── 1. TOPO FIXO (Cabeçalho do Copiloto) ─────────────────────────────
         st.header("🌱 Copiloto de Carbono")
