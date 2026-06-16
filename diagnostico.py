@@ -146,34 +146,11 @@ def chamar_inteligencia_artificial(respostas: dict[str, str], nivel: str, percen
         client = genai.Client(api_key=api_key)
         
         prompt = f"""
-        Atue como um Auditor Senior Internacional de Créditos de Carbono e Consultor Especialista no Sistema Brasileiro de Comercio de Emissoes (SBCE).
-        Gere uma analise de viabilidade comercial e due diligence tecnica estrita para o seguinte projeto baseado nas respostas do cliente:
-        
-        Contexto do Projeto:
-        - Tipo de Atividade: {obter(respostas, '1. Tipo principal do projeto')}
-        - Bioma/Regiao: {obter(respostas, '2. Bioma / regiao')}
-        - Area Declarada: {obter(respostas, '3. Área total envolvida')}
-        - Estagio Atual: {obter(respostas, '4. Estágio atual')}
-        - Situacao Fundiaria: {obter(respostas, '5. Documentação fundiária')}
-        - Risco de Sobreposicao no CAR: {obter(respostas, '23. Restrições e Sobreposições Territoriais')}
-        - Passivo de Reserva Legal: {obter(respostas, '24. Passivo de Reserva Legal')}
-        - Estimativa Volumetrica Anual: {obter(respostas, '9. Estimativa de tCO2e/ano')}
-        
-        Resultado do Algoritmo de Triagem:
-        - Classificacao Atual: Nivel {nivel} ({percentual}% de Compliance Inicial).
-        
-        Requisitos para o seu texto de resposta:
-        1. Escreva em formato fluido corporativo de alto padrao (tom consultivo, direto e analitico).
-        2. Nao use topicos com asteriscos, bolinhas ou markdown (pois isso quebra a geracao do PDF). Escreva em paragrafos limpos.
-        3. Faca um paragrafo curto sobre a Maturidade Geral, um paragrafo sobre os Gaps Fundiarios/CAR e um paragrafo final com a Diretriz Estratégica de Mercado (Mercado Regulado SBCE vs Voluntario Verra/Gold Standard).
-        4. IMPORTANTE: Remova qualquer tipo de acentuacao ou caractere especial do texto final (use 'analise' em vez de 'análise', 'estagio' em vez de 'estágio'). Isso e obrigatorio para evitar conflito de fontes no motor grafico.
-        
-        Retorne apenas o texto da analise consultiva final em 3 paragrafos limpos.
+        Atue como um Auditor Senior Internacional de Créditos de Carbono...
         """
         
-        # 🟢 ATUALIZAÇÃO: Chamada moderna com a sintaxe correta da nova geração da Google
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-1.5-flash',  # 🟢 CORREÇÃO: Tirar o "models/" daqui também!
             contents=prompt,
         )
         return response.text.strip()
