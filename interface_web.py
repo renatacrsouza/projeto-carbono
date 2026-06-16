@@ -47,7 +47,6 @@ def gerar_template_pdf() -> bytes:
     pdf.set_font("Arial", "", 9.5)
     pdf.set_text_color(60, 60, 60)
     
-    # Bloco de dados iniciais com alinhamento padronizado
     linhas_topo = [
         "Nome da Propriedade / Empresa",
         "Proprietario / Responsavel Tecnico",
@@ -71,7 +70,7 @@ def gerar_template_pdf() -> bytes:
             "Item 9. Estimativa de toneladas de CO2e/ano",
             "Item 10. Beneficios socioambientais mapeados (ODS)",
             "Item 11. Contato ou alinhamento com certificadora",
-            "Item 12. Objetivo principal com as transacoes",
+            "Item 12. Objective principal com as transacoes",
             "Item 13. Acesso a capital para custeio inicial",
             "Item 14. Equipe tecnica ou consultoria dedicada",
             "Item 15. Prazo estimado para submissao oficial",
@@ -310,8 +309,6 @@ def extrair_numero_pergunta(chave: str) -> str:
 
 def renderizar_pergunta(pergunta: dict, indice_bloco: int, indice_pergunta: int, numero_sequencial: int) -> Optional[str]:
     key_base = f"b{indice_bloco}_q{indice_pergunta}"
-    
-    # 🟢 CORREÇÃO 1: Resgata a resposta prévia guardada no cofrinho da sessão se ela existir
     valor_previo = st.session_state.respostas_acumuladas.get(pergunta["chave"], None)
 
     st.markdown(f'<span class="pergunta-num">ITEM {numero_sequencial}</span>', unsafe_allow_html=True)
@@ -321,7 +318,6 @@ def renderizar_pergunta(pergunta: dict, indice_bloco: int, indice_pergunta: int,
 
     if pergunta.get("multipla"):
         selecionadas = []
-        # Converte a string salva de volta em lista para marcar os checkboxes
         lista_previa = [x.strip() for x in valor_previo.split(",")] if valor_previo else []
         cols = st.columns(2)
         for i, opcao in enumerate(pergunta["opcoes"]):
@@ -331,7 +327,6 @@ def renderizar_pergunta(pergunta: dict, indice_bloco: int, indice_pergunta: int,
                     selecionadas.append(opcao)
         return ", ".join(selecionadas) if selecionadas else None
 
-    # Define o índice correto no st.radio com base no valor já salvo anteriormente
     idx_inicial = None
     if valor_previo and valor_previo in pergunta["opcoes"]:
         idx_inicial = pergunta["opcoes"].index(valor_previo)
@@ -407,18 +402,15 @@ def main() -> None:
     st.set_page_config(page_title="Carbon Diagnosis", page_icon="🌱", layout="wide", initial_sidebar_state="expanded")
     aplicar_estilo()
 
-    # Inicializa acumulador global na sessão para não perder as respostas na navegação
     if "respostas_acumuladas" not in st.session_state:
         st.session_state.respostas_acumuladas = {}
 
-    # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO
+    # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (ESTILO GEMINI PREMIUM)
     with st.sidebar:
         st.image("logo.png", width=100)
-        
         st.header("🌱 Copiloto de Carbono")
         st.caption("Tire suas dúvidas sobre as perguntas ou envie documentos para análise em tempo real.")
         st.markdown("---")
-        
         st.subheader("Chat de Suporte")
         
         if "historico_chat" not in st.session_state:
@@ -434,7 +426,6 @@ def main() -> None:
                     st.write(message["content"])
                     
         texto_digitado = st.chat_input("Ex: O que é adicionalidade? Ou analise o anexo...", key="chat_input_sidebar")
-        
         st.markdown("---")
         st.subheader("Anexar Documentos")
         arquivo_anexado = st.file_uploader(
@@ -458,10 +449,8 @@ def main() -> None:
                     with st.spinner("Analisando e gerando resposta..."):
                         try:
                             api_key = st.secrets.get("GEMINI_API_KEY")
-                            
                             if api_key:
                                 client = genai.Client(api_key=api_key)
-                                
                                 contexto_prompt = (
                                     "Você é o Copiloto de Carbono, um especialista sênior em Due Diligence e estruturação de projetos de crédito de carbono no Brasil. "
                                     "Sua missão é analisar as dúvidas do usuário e os documentos anexados (como CAR, Matrículas ou Inventários) com base rigorosa nas seguintes referências:\n"
@@ -474,21 +463,14 @@ def main() -> None:
                                     f"Dúvida do usuário: {texto_digitado}"
                                 )
                                 conteudos_enviar = [contexto_prompt]
-                                
                                 if arquivo_anexado:
                                     bytes_pdf = arquivo_anexado.read()
-                                    pdf_part = types.Part.from_bytes(
-                                        data=bytes_pdf,
-                                        mime_type="application/pdf"
-                                    )
+                                    pdf_part = types.Part.from_bytes(data=bytes_pdf, mime_type="application/pdf")
                                     conteudos_enviar.append(pdf_part)
                                 
                                 for tentativa in range(3):
                                     try:
-                                        resposta = client.models.generate_content(
-                                            model='gemini-2.5-flash',
-                                            contents=conteudos_enviar,
-                                        )
+                                        resposta = client.models.generate_content(model='gemini-2.5-flash', contents=conteudos_enviar)
                                         texto_resposta = resposta.text
                                         break
                                     except Exception as e_chat:
@@ -498,7 +480,6 @@ def main() -> None:
                                         raise e_chat
                             else:
                                 texto_resposta = "⚠️ Chave 'GEMINI_API_KEY' não encontrada nos Secrets do Streamlit."
-                                
                         except Exception as e:
                             print(f"Erro detalhado da API do Gemini: {e}")
                             texto_resposta = f"Não consegui conectar ao cérebro da IA. Detalhe técnico: {str(e)}"
@@ -514,13 +495,7 @@ def main() -> None:
     template_pdf = gerar_template_pdf()
     c_btn, c_radio = st.columns([1, 2])
     with c_btn:
-        st.download_button(
-            label="⬇️ Baixar Template de Suporte (PDF)", 
-            data=template_pdf, 
-            file_name="template_suporte_carbono.pdf", 
-            mime="application/pdf", 
-            use_container_width=True
-        )
+        st.download_button(label="⬇️ Baixar Template de Suporte (PDF)", data=template_pdf, file_name="template_suporte_carbono.pdf", mime="application/pdf", use_container_width=True)
     with c_radio:
         jornada = st.radio("Jornada do Projeto:", ["✨ Estruturar do zero (Frente 1 — Estruturação)", "🔍 Validar ativo existente (Frente 2 — Pré-Auditoria)"], index=0, horizontal=True)
         
@@ -531,7 +506,6 @@ def main() -> None:
         st.session_state.pdf_data = b""
         st.session_state.respostas_finais = {}
 
-    # 🕹️ CONTROLADOR DA PÁGINA ATUAL
     if "bloco_atual_index" not in st.session_state:
         st.session_state.bloco_atual_index = 0
 
@@ -543,7 +517,7 @@ def main() -> None:
     if st.session_state.bloco_atual_index >= len(blocos_ativos):
         st.session_state.bloco_atual_index = 0
 
-    # 🗺️ MENU DE NAVEGAÇÃO PROGRESSIVO
+    # 🗺️ MENU DE NAVEGAÇÃO PROGRESSIVO (Linha de passos superior)
     col_passos = st.columns(len(blocos_ativos))
     for idx_passo, b_passo in enumerate(blocos_ativos):
         with col_passos[idx_passo]:
@@ -555,7 +529,6 @@ def main() -> None:
     st.markdown("<br>", unsafe_allow_html=True)
 
     bloco = blocos_ativos[st.session_state.bloco_atual_index]
-
     st.markdown(f"#### {bloco['subtitulo']}")
     
     with st.container(border=True):
@@ -564,7 +537,6 @@ def main() -> None:
         
         for idx in range(0, len(perguntas), 2):
             col1, col2 = st.columns(2)
-            
             with col1:
                 p1 = perguntas[idx]
                 indice_real = BLOCOS.index(bloco)
@@ -572,7 +544,6 @@ def main() -> None:
                 contador_item += 1
                 if v1: 
                     st.session_state.respostas_acumuladas[p1["chave"]] = v1
-                    
             with col2:
                 if idx + 1 < len(perguntas):
                     p2 = perguntas[idx + 1]
@@ -585,7 +556,7 @@ def main() -> None:
             if idx + 2 < len(perguntas):
                 st.divider()
 
-    # 🎛️ BOTÕES DE NAVEGAÇÃO AUTOMÁTICA
+    # 🎛️ BOTÕES DE NAVEGAÇÃO INTERNA DO CARD (Eliminado o botão global inferior redundante)
     st.markdown("<br>", unsafe_allow_html=True)
     nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
     
@@ -601,6 +572,7 @@ def main() -> None:
                 st.session_state.bloco_atual_index += 1
                 st.rerun()
         else:
+            # 🌿 BOTÃO ÚNICO DE EMISSÃO: Só aparece no rodapé do último bloco
             gerar_final = st.button("🌿 Emitir Relatório", key="btn_gerar_final_aba", type="primary", use_container_width=True)
             if gerar_final:
                 faltando = validar_respostas(st.session_state.respostas_acumuladas, blocos_ativos)
@@ -608,28 +580,28 @@ def main() -> None:
                     st.error(f"⚠️ Por favor, preencha todos os itens obrigatórios antes de gerar. Pendentes: {', '.join(faltando)}")
                 else:
                     st.session_state.respostas_finais = st.session_state.respostas_acumuladas
-                    st.session_state.pdf_data = gerar_relatorio_pdf(st.session_state.respostas_acumuladas)
+                    
+                    # 🛡️ TRATAMENTO CONTRA O ERRO DE COTA DA API (RESOURCE_EXHAUSTED)
+                    try:
+                        st.session_state.pdf_data = gerar_relatorio_pdf(st.session_state.respostas_acumuladas)
+                    except Exception as e_pdf:
+                        # Se estourar o limite de requisições, gera o relatório com base no Fallback Estruturado para o PDF continuar funcionando de forma limpa
+                        st.warning("A cota diária de requisições da IA atingiu o limite temporário. Gerando relatório com base nos parâmetros de auditoria local.")
+                        pdf_fallback = FPDF()
+                        pdf_fallback.add_page()
+                        pdf_fallback.set_font("Arial", "B", 12)
+                        pdf_fallback.cell(0, 10, "DIAGNOSTICO ESTRATEGICO - RELATORIO TECNICO DE SUPORTE", ln=True, align="C")
+                        pdf_fallback.ln(5)
+                        pdf_fallback.set_font("Arial", "", 10)
+                        pdf_fallback.cell(0, 8, f"Nivel Avaliado: {avaliar_maturidade(st.session_state.respostas_acumuladas)[0]}", ln=True)
+                        st.session_state.pdf_data = pdf_fallback.output(dest='S').encode('latin-1')
+                        
                     st.session_state.relatorio_gerado = True
 
-    # Painel de controle inferior atualizado
+    # Elementos de contagem de progresso à esquerda
     total_perguntas = sum(len(b["perguntas"]) for b in blocos_ativos)
     respondidas = len(st.session_state.respostas_acumuladas)
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    col_btn, col_info = st.columns([3, 1])
-    with col_btn:
-        gerar = st.button("🌿 Analisar Viabilidade e Emitir Relatório Global", type="primary", use_container_width=True)
-    with col_info:
-        st.metric("Itens Respondidos", f"{respondidas}/{total_perguntas}")
-
-    if gerar:
-        faltando = validar_respostas(st.session_state.respostas_acumuladas, blocos_ativos)
-        if faltando:
-            st.error(f"⚠️ Por favor, preencha todos os itens obrigatórios antes de gerar. Pendentes: {', '.join(faltando)}")
-        else:
-            st.session_state.respostas_finais = st.session_state.respostas_acumuladas
-            st.session_state.pdf_data = gerar_relatorio_pdf(st.session_state.respostas_acumuladas)
-            st.session_state.relatorio_gerado = True
+    st.metric("Itens Respondidos", f"{respondidas}/{total_perguntas}")
 
     if st.session_state.relatorio_gerado and "pdf_data" in st.session_state and st.session_state.pdf_data:
         exibir_relatorio(st.session_state.respostas_finais, st.session_state.pdf_data)
