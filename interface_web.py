@@ -379,14 +379,14 @@ def main() -> None:
     st.set_page_config(page_title="Carbon Diagnosis", page_icon="🌱", layout="wide", initial_sidebar_state="expanded")
     aplicar_estilo()
 
-    # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (COPILOTO IA)
+   # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (ESTILO GEMINI COMPACTO)
     with st.sidebar:
-        # 1 ── Cabeçalho do Copiloto ──────────────────────────────────────────
+        # ── 1. TOPO FIXO (Cabeçalho do Copiloto) ─────────────────────────────
         st.header("🌱 Copiloto de Carbono")
         st.caption("Tire suas dúvidas sobre as perguntas ou envie documentos para análise em tempo real.")
         st.markdown("---")
         
-        # 2 ── Chat de Suporte (Mensagens do Histórico) ───────────────────────
+        # ── 2. MEIO EXPANSÍVEL (O Histórico que rola sozinho) ─────────────────
         st.subheader("Chat de Suporte")
         
         if "historico_chat" not in st.session_state:
@@ -394,14 +394,63 @@ def main() -> None:
                 {"role": "assistant", "content": "Olá! Sou seu assistente de due diligence. Se não souber como responder alguma pergunta do formulário ao lado esquerdo, ou quiser que eu analise o documento anexo, é só me chamar!"}
             ]
             
-        # Contêiner para renderizar o histórico na tela (Meio da barra)
-        for mensagem in st.session_state.historico_chat:
-            with st.chat_message(mensagem["role"]):
-                st.write(mensagem["content"])
-                
-        st.markdown("---")
+        # Contêiner invisível com rolagem própria para o histórico de mensagens
+        caixa_historico = st.container(height=380, border=False)
         
-        # 3 ── Anexar Documentos (Posicionado acima do campo de escrita) ──────
+        with caixa_historico:
+            for mensagem in st.session_state.historico_chat:
+                with st.chat_message(mensagem["role"]):
+                    st.write(mensagem["content"])
+                    
+        # ── 3. CAIXA DE TEXTO DO CHAT ────────────────────────────────────────
+        if pergunta_usuario := st.chat_input("Ex: O que é adicionalidade?", key="chat_input_sidebar"):
+            with caixa_historico:
+                with st.chat_message("user"):
+                    st.write(pergunta_usuario)
+            st.session_state.historico_chat.append({"role": "user", "content": pergunta_usuario})
+            
+            with caixa_historico:
+                with st.chat_message("assistant"):
+                    with st.spinner("Analisando..."):
+                        try:
+                            api_key = st.secrets.get("GEMINI_API_KEY")
+                            
+                            if api_key:
+                                client = genai.Client(api_key=api_key)
+                                
+                                contexto_prompt = (
+                                    "Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. "
+                                    f"Responda de forma curta, clara e direta à seguinte dúvida: {pergunta_usuario}"
+                                )
+                                
+                                # Escudo contra o erro 503 do servidor da Google
+                                for tentativa in range(3):
+                                    try:
+                                        resposta = client.models.generate_content(
+                                            model='gemini-2.5-flash',
+                                            contents=contexto_prompt,
+                                        )
+                                        texto_resposta = resposta.text
+                                        break
+                                    except Exception as e_chat:
+                                        if "503" in str(e_chat) and tentativa < 2:
+                                            time.sleep(2)
+                                            continue
+                                        raise e_chat
+                            else:
+                                texto_resposta = "⚠️ Chave 'GEMINI_API_KEY' não encontrada nos Secrets."
+                                
+                        except Exception as e:
+                            print(f"Erro detalhado da API do Gemini: {e}")
+                            texto_resposta = f"Não consegui conectar ao cérebro da IA. Detalhe técnico: {str(e)}"
+                        
+                        st.write(texto_resposta)
+            
+            st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
+            st.rerun()
+
+        # ── 4. RODAPÉ FIXO (Área de Anexar Documentos posicionada embaixo da escrita) ──
+        st.markdown("---")
         st.subheader("Anexar Documentos")
         arquivo_anexado = st.file_uploader(
             "Envie a Matrícula, CAR ou PDD (PDF)", 
@@ -412,52 +461,6 @@ def main() -> None:
         
         if arquivo_anexado:
             st.success("Documento carregado com sucesso!")
-            
-        # 4 ── Campo de Entrada Fixo no Rodapé ─────────────────────────────────
-        if pergunta_usuario := st.chat_input("Ex: O que é adicionalidade?", key="chat_input_sidebar"):
-            with st.chat_message("user"):
-                st.write(pergunta_usuario)
-            st.session_state.historico_chat.append({"role": "user", "content": pergunta_usuario})
-            
-            with st.chat_message("assistant"):
-                with st.spinner("Analisando..."):
-                    try:
-                        api_key = st.secrets.get("GEMINI_API_KEY")
-                        
-                        if api_key:
-                            client = genai.Client(api_key=api_key)
-                            
-                            contexto_prompt = (
-                                "Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. "
-                                f"Responda de forma curta, clara e direta à seguinte dúvida: {pergunta_usuario}"
-                            )
-                            
-                            # 🛡️ Sistema de retry automático contra o erro 503
-                            for tentativa in range(3):
-                                try:
-                                    resposta = client.models.generate_content(
-                                        model='gemini-2.5-flash',
-                                        contents=contexto_prompt,
-                                    )
-                                    texto_resposta = resposta.text
-                                    break  # Sucesso! Sai do loop de tentativas
-                                except Exception as e_chat:
-                                    if "503" in str(e_chat) and tentativa < 2:
-                                        time.sleep(2)
-                                        continue
-                                    raise e_chat
-                        else:
-                            texto_resposta = "⚠️ Chave 'GEMINI_API_KEY' não encontrada nos Secrets do Streamlit ou no arquivo local .env. Por favor, configure a chave para ativar a IA."
-                            
-                    except Exception as e:
-                        print(f"Erro detalhado da API do Gemini: {e}")
-                        texto_resposta = f"Não consegui conectar ao cérebro da IA. Detalhe técnico: {str(e)}"
-                    
-                    st.write(texto_resposta)
-                    st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
-                    
-                    # Atualiza a página suavemente para colar a resposta nova na tela
-                    st.rerun()
 
     # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
