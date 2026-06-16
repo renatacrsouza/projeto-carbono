@@ -7,6 +7,7 @@ from typing import Optional
 import streamlit as st
 from fpdf import FPDF
 from google import genai
+import time  # 🟢 ADICIONE ESSA LINHA AQUI!
 
 from diagnostico import (
     avaliar_maturidade,
@@ -419,25 +420,30 @@ def main() -> None:
                         api_key = st.secrets.get("GEMINI_API_KEY")
                         
                         if api_key:
-                            client = genai.Client(
-                                api_key=api_key,
-                                http_options={'api_version': 'v1'}
-                            )
+                            client = genai.Client(api_key=api_key)
                             
                             contexto_prompt = (
                                 "Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. "
                                 f"Responda de forma curta, clara e direta à seguinte dúvida: {pergunta_usuario}"
                             )
                             
-                            # 🟢 CORREÇÃO: Usando a nomenclatura de produção oficial para a API v1
-                            resposta = client.models.generate_content(
-                                model='gemini-2.5-flash',
-                                contents=contexto_prompt,
-                            )
-                            texto_resposta = resposta.text
+                            # 🛡️ Sistema de retry automático (3 tentativas se o Google oscilar)
+                            for tentativa in range(3):
+                                try:
+                                    resposta = client.models.generate_content(
+                                        model='gemini-2.5-flash',
+                                        contents=contexto_prompt,
+                                    )
+                                    texto_resposta = resposta.text
+                                    break  # Sucesso! Sai do loop de tentativas
+                                except Exception as e_chat:
+                                    if "503" in str(e_chat) and tentativa < 2:
+                                        time.sleep(2)
+                                        continue
+                                    raise e_chat
                         else:
                             texto_resposta = "⚠️ Chave 'GEMINI_API_KEY' não encontrada nos Secrets do Streamlit ou no arquivo local .env. Por favor, configure a chave para ativar a IA."
-                    
+                            
                     except Exception as e:
                         print(f"Erro detalhado da API do Gemini: {e}")
                         texto_resposta = f"Não consegui conectar ao cérebro da IA. Detalhe técnico: {str(e)}"

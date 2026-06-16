@@ -5,6 +5,7 @@ import os
 from typing import Any
 from fpdf import FPDF
 import streamlit as st
+import time  # Garanta que tem este import no topo do arquivo
 from google import genai  # 🟢 Biblioteca nova e pura
 
 
@@ -128,7 +129,7 @@ def gerar_proximos_passos(respostas: dict[str, str]) -> list[str]:
 
 
 def chamar_inteligencia_artificial(respostas: dict[str, str], nivel: str, percentual: str) -> str:
-    """Conecta com a API do Gemini para gerar uma análise consultiva ultra personalizada."""
+    """Conecta com a API do Gemini para gerar uma análise consultiva ultra personalizada com retry automático."""
     api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
     
     if not api_key:
@@ -141,25 +142,52 @@ def chamar_inteligencia_artificial(respostas: dict[str, str], nivel: str, percen
         )
         
     try:
-        client = genai.Client(
-            api_key=api_key,
-            http_options={'api_version': 'v1'}
-        )
+        # Conexão limpa e direta, igual ao chat da interface
+        client = genai.Client(api_key=api_key)
         
         prompt = f"""
-        Atue como um Auditor Senior Internacional de Créditos de Carbono...
+        Atue como um Auditor Senior Internacional de Créditos de Carbono e Consultor Especialista no Sistema Brasileiro de Comercio de Emissoes (SBCE).
+        Gere uma analise de viabilidade comercial e due diligence tecnica estrita para o seguinte projeto baseado nas respostas do cliente:
+        
+        Contexto do Projeto:
+        - Tipo de Atividade: {obter(respostas, '1. Tipo principal do projeto')}
+        - Bioma/Regiao: {obter(respostas, '2. Bioma / regiao')}
+        - Area Declarada: {obter(respostas, '3. Área total envolvida')}
+        - Estagio Atual: {obter(respostas, '4. Estágio atual')}
+        - Situacao Fundiaria: {obter(respostas, '5. Documentação fundiária')}
+        - Risco de Sobreposicao no CAR: {obter(respostas, '23. Restrições e Sobreposições Territoriais')}
+        - Passivo de Reserva Legal: {obter(respostas, '24. Passivo de Reserva Legal')}
+        - Estimativa Volumetrica Anual: {obter(respostas, '9. Estimativa de tCO2e/ano')}
+        
+        Resultado do Algoritmo de Triagem:
+        - Classificacao Atual: Nivel {nivel} ({percentual}% de Compliance Inicial).
+        
+        Requisitos para o seu texto de resposta:
+        1. Escreva em formato fluido corporativo de alto padrao (tom consultivo, direto e analitico).
+        2. Nao use topicos com asteriscos, bolinhas ou markdown (pois isso quebra a geracao do PDF). Escreva em paragrafos limpos.
+        3. Faca um paragrafo curto sobre a Maturidade Geral, um paragrafo sobre os Gaps Fundiarios/CAR e um paragrafo final com a Diretriz Estratégica de Mercado (Mercado Regulado SBCE vs Voluntario Verra/Gold Standard).
+        4. IMPORTANTE: Remova qualquer tipo de acentuacao ou caractere especial do texto final (use 'analise' em vez de 'análise', 'estagio' em vez de 'estágio'). Isso e obrigatorio para evitar conflito de fontes no motor grafico.
+        
+        Retorne apenas o texto da analise consultiva final em 3 paragrafos limpos.
         """
         
-        # 🟢 CORREÇÃO: Alinhando o modelo de produção oficial aqui também!
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt,
-        )
-        return response.text.strip()
-        
+        # 🛡️ SISTEMA DE RETRY (3 tentativas automáticas)
+        for tentativa in range(3):
+            try:
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt,
+                )
+                return response.text.strip()
+            except Exception as e_ia:
+                # Se o Google der erro de indisponibilidade (503), espera e tenta de novo
+                if "503" in str(e_ia) and tentativa < 2:
+                    time.sleep(2)
+                    continue
+                raise e_ia  # Se for outro erro ou estourar as 3 vezes, joga para o try externo
+                
     except Exception as e:
         return f"Erro na conexao com o cerebro de IA. Relatorio gerado com base nos parametros estruturais para o nivel {nivel} ({percentual}%). Detalhe: {str(e)}"
-
 
 def gerar_relatorio_pdf(respostas: dict[str, str]) -> bytes:
     """Gera o relatório final formatado em PDF sem quebras e com inteligência artificial."""
