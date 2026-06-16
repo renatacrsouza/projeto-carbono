@@ -118,7 +118,7 @@ def gerar_template_pdf() -> bytes:
     return bytes(resultado)
 
 
-# ── Estrutura do questionário ────────────────────────────────────────────────
+# ── Estrutura do questionário atualizada ──────────────────────────────────────
 BLOCOS = [
     {
         "titulo": "Identificação",
@@ -129,13 +129,6 @@ BLOCOS = [
             {"chave": "2. Bioma / região", "texto": "Em qual bioma / região está localizado?", "opcoes": ["Amazônia", "Cerrado", "Mata Atlântica", "Pantanal", "Caatinga", "Pampa / Sul", "Outro"]},
             {"chave": "3. Área total envolvida", "texto": "Qual é a área total envolvida?", "opcoes": ["Menos de 50 ha", "50 a 500 ha", "500 a 5.000 ha", "Mais de 5.000 ha"]},
         ],
-    },
-    # 🟢 NOVO BLOCO EXCLUSIVO: Criado para isolar o mapeamento em sua própria aba
-    {
-        "titulo": "Mapeamento",
-        "subtitulo": "02 · MAPEAMENTO GEOGRÁFICO DA ÁREA",
-        "icone": "🗺️",
-        "perguntas": [] # Não possui perguntas tradicionais, apenas o mapa customizado
     },
     {
         "titulo": "Situação Atual",
@@ -213,6 +206,12 @@ BLOCOS = [
             {"chave": "23. Restrições e Sobreposições Territoriais", "texto": "A análise indicou sobreposição da área?", "opcoes": ["Não, área 100% livre e regular", "Sobreposição parcial com UC", "Sobreposição com TI ou Quilombolas", "Sobreposição com outras propriedades", "Não realizei a análise de Gaps"]},
             {"chave": "24. Passivo de Reserva Legal", "texto": "Existe déficit florestal de Reserva Legal ou APP?", "opcoes": ["Não, déficit zerado", "Sim, com PRA ativo", "Sim, passivo aberto sem plano", "Não aplicável"]}
         ]
+    },
+    {
+        "titulo": "Mapeamento",
+        "subtitulo": "11 · MAPEAMENTO GEOGRÁFICO DA ÁREA",
+        "icone": "🗺️",
+        "perguntas": [] 
     }
 ]
 
