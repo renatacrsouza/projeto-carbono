@@ -1,5 +1,6 @@
-
 #!/usr/bin/env python3
+"""Interface web premium do diagnóstico de carbono - Estilo Minimalista Apple."""
+
 import time
 from datetime import datetime
 from typing import Optional
@@ -8,9 +9,14 @@ from fpdf import FPDF
 from google import genai
 from google.genai import types
 import pandas as pd
+
 from diagnostico import (
-    avaliar_maturidade, gerar_proximos_passos, gerar_relatorio_pdf, 
-    gerar_resumo_executivo, obter, BLOCOS, CORES_MATURIDADE)
+    avaliar_maturidade,
+    gerar_proximos_passos,
+    gerar_relatorio_pdf,
+    gerar_resumo_executivo,
+    obter,
+)
 
 
 def gerar_template_pdf() -> bytes:
@@ -103,7 +109,7 @@ def gerar_template_pdf() -> bytes:
             pdf.cell(190, 5.5, "__________________________________________________________________________________________", ln=True)
             pdf.ln(1)
             
-    return pdf.output(dest='S')
+    return pdf.output(dest='S').encode('latin-1')
 
 
 # ── Estrutura do questionário ────────────────────────────────────────────────
@@ -382,55 +388,240 @@ def main() -> None:
     st.set_page_config(page_title="Carbon Diagnosis", page_icon="🌱", layout="wide", initial_sidebar_state="expanded")
     aplicar_estilo()
 
-    if "respostas_acumuladas" not in st.session_state: st.session_state.respostas_acumuladas = {}
-    if "bloco_atual_index" not in st.session_state: st.session_state.bloco_atual_index = 0
-    if "latitude_mapa" not in st.session_state: st.session_state.latitude_mapa = -23.2641
-    if "longitude_mapa" not in st.session_state: st.session_state.longitude_mapa = -47.2992
+    if "respostas_acumuladas" not in st.session_state:
+        st.session_state.respostas_acumuladas = {}
 
-    # [Mantenha aqui todo o seu código da Sidebar/Chat...]
+    if "latitude_mapa" not in st.session_state:
+        st.session_state.latitude_mapa = -23.2641
+    if "longitude_mapa" not in st.session_state:
+        st.session_state.longitude_mapa = -47.2992
 
-    # Conteúdo Principal
-    st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1></div>', unsafe_allow_html=True)
-    
-    jornada = st.radio("Jornada do Projeto:", ["✨ Estruturar do zero (Frente 1 — Estruturação)", "🔍 Validar ativo existente (Frente 2 — Pré-Auditoria)"], index=0, horizontal=True)
-    
-    # Definição dos Blocos (Sem modificar a sua lógica)
+    # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (ESTILO GEMINI PREMIUM)
+    with st.sidebar:
+        st.image("logo.png", width=100)
+        st.header("🌱 Copiloto de Carbono")
+        st.caption("Tire suas dúvidas sobre as perguntas ou envie documentos para análise em tempo real.")
+        st.markdown("---")
+        st.subheader("Chat de Suporte")
+        
+        if "historico_chat" not in st.session_state:
+            st.session_state.historico_chat = [
+                {"role": "assistant", "content": "Olá! Sou seu assistente de due diligence. Se não souber como responder alguma pergunta do formulário ao lado esquerdo, ou quiser que eu analise o documento anexo, é só me chamar!"}
+            ]
+            
+        caixa_historico = st.container(height=350, border=False)
+        
+        with caixa_historico:
+            for message in st.session_state.historico_chat:
+                with st.chat_message(message["role"]):
+                    st.write(message["content"])
+                    
+        texto_digitado = st.chat_input("Ex: O que é adicionalidade? Ou analise o anexo...", key="chat_input_sidebar")
+        st.markdown("---")
+        st.subheader("Anexar Documentos")
+        arquivo_anexado = st.file_uploader(
+            "Envie a Matrícula, CAR ou PDD (PDF)", 
+            type=["pdf"], 
+            help="A IA lerá o documento para te ajudar a responder o formulário ao lado.",
+            key="uploader_ia_definitivo"
+        )
+        
+        if arquivo_anexado:
+            st.success("📎 Documento pronto para análise!")
+
+        if texto_digitado:
+            with caixa_historico:
+                with st.chat_message("user"):
+                    st.write(texto_digitado)
+            st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
+            
+            with caixa_historico:
+                with st.chat_message("assistant"):
+                    with st.spinner("Analisando e gerando resposta..."):
+                        try:
+                            api_key = st.secrets.get("GEMINI_API_KEY")
+                            if api_key:
+                                client = genai.Client(api_key=api_key)
+                                contexto_prompt = (
+                                    "Você é o Copiloto de Carbono, um especialista sênior em Due Diligence e estruturação de projetos de crédito de carbono no Brasil. "
+                                    "Sua missão é analisar as dúvidas do usuário e os documentos anexados (como CAR, Matrículas ou Inventários) com base rigorosa nas seguintes referências:\n"
+                                    "1. GHG Protocol: Classifique e oriente sobre limites organizacionais e escopos de emissão (Escopos 1, 2 e 3).\n"
+                                    "2. Diretrizes AFOLU: Avalie critérios de elegibilidade do solo, histórico de desmatamento/reflorestamento (ARR/REDD+) e o risco de Vazamento (Leakage).\n"
+                                    "3. Adicionalidade (MDL): Avalie se a atividade proposta demonstra barreira financeira, tecnológica ou regulatória, comprovando que o projeto não ocorreria sem o incentivo dos créditos.\n"
+                                    "4. Manual de Verificadores: Seja criterioso com a consistência de dados. Exija perímetros digitais claros (arquivos KML/SHP) e consistência entre CAR e Matrícula.\n"
+                                    "5. Regulamentação SBCE: Oriente sobre o enquadramento no Sistema Brasileiro de Comércio de Emissões para quem emite acima de 25.000 tCO2e/ano.\n\n"
+                                    "Responda de forma altamente profissional, porém clara, direta e executiva. Se houver um PDF anexado, use seus dados para fundamentar tecnicamente o diagnóstico.\n"
+                                    f"Dúvida do usuário: {texto_digitado}"
+                                )
+                                conteudos_enviar = [contexto_prompt]
+                                if arquivo_anexado:
+                                    bytes_pdf = arquivo_anexado.read()
+                                    pdf_part = types.Part.from_bytes(data=bytes_pdf, mime_type="application/pdf")
+                                    conteudos_enviar.append(pdf_part)
+                                
+                                for tentativa in range(3):
+                                    try:
+                                        resposta = client.models.generate_content(model='gemini-2.5-flash', contents=conteudos_enviar)
+                                        texto_resposta = resposta.text
+                                        break
+                                    except Exception as e_chat:
+                                        if "503" in str(e_chat) and tentativa < 2:
+                                            time.sleep(2)
+                                            continue
+                                        raise e_chat
+                            else:
+                                texto_resposta = "⚠️ Chave 'GEMINI_API_KEY' não encontrada nos Secrets do Streamlit."
+                        except Exception as e:
+                            print(f"Erro detalhado da API do Gemini: {e}")
+                            texto_resposta = f"Não consegui conectar ao cérebro da IA. Detalhe técnico: {str(e)}"
+                        
+                        st.write(texto_resposta)
+            
+            st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
+            st.rerun()
+
+    # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
+    st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
+
+    template_pdf = gerar_template_pdf()
+    c_btn, c_radio = st.columns([1, 2])
+    with c_btn:
+        st.download_button(label="⬇️ Baixar Template de Suporte (PDF)", data=template_pdf, file_name="template_suporte_carbono.pdf", mime="application/pdf", use_container_width=True)
+    with c_radio:
+        jornada = st.radio("Jornada do Projeto:", ["✨ Estruturar do zero (Frente 1 — Estruturação)", "🔍 Validar ativo existente (Frente 2 — Pré-Auditoria)"], index=0, horizontal=True)
+        
+    st.divider()
+
+    if "relatorio_gerado" not in st.session_state:
+        st.session_state.relatorio_gerado = False
+        st.session_state.pdf_data = b""
+        st.session_state.respostas_finais = {}
+
+    if "bloco_atual_index" not in st.session_state:
+        st.session_state.bloco_atual_index = 0
+
     if "Frente 1" in jornada:
-        blocos_ativos = [BLOCOS[0], BLOCOS[2], BLOCOS[3], BLOCOS[4], BLOCOS[5], BLOCOS[6], BLOCOS[1]]
+        # Pega Identificação, Mapeamento, Situação Atual, Potencial, Certificação, Execução, Riscos
+        blocos_ativos = [BLOCOS[0], BLOCOS[1], BLOCOS[2], BLOCOS[3], BLOCOS[4], BLOCOS[5], BLOCOS[6]]
     else:
-        blocos_ativos = [BLOCOS[0], BLOCOS[2], BLOCOS[7], BLOCOS[8], BLOCOS[9], BLOCOS[1]]
+        # Pega Identificação, Mapeamento, Situação Atual, Checklist Docs, Gap Analysis SBCE, Análise do CAR
+        blocos_ativos = [BLOCOS[0], BLOCOS[1], BLOCOS[2], BLOCOS[7], BLOCOS[8], BLOCOS[9]]
 
-    # Navegação e Renderização blindada
+    if st.session_state.bloco_atual_index >= len(blocos_ativos):
+        st.session_state.bloco_atual_index = 0
+
+    # 📊 BARRA DE PROGRESSO EM TEMPO REAL POR PERGUNTA
+    # Contamos o total apenas dos blocos de perguntas reais (excluindo o bloco de mapeamento)
+    total_perguntas = sum(len(b["perguntas"]) for b in blocos_ativos if b["titulo"] != "Mapeamento")
+    respondidas = len(st.session_state.respostas_acumuladas)
+    percentual_preenchido = int((respondidas / total_perguntas) * 100) if total_perguntas > 0 else 0
+    
+    st.markdown(f"**Progresso Completo do Diagnóstico: {percentual_preenchido}%** ({respondidas} de {total_perguntas} itens concluídos)")
+    st.progress(respondidas / total_perguntas if total_perguntas > 0 else 0.0)
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 🗺️ MENU DE NAVEGAÇÃO PROGRESSIVO (Linha de passos superior)
+    col_passos = st.columns(len(blocos_ativos))
+    for idx_passo, b_passo in enumerate(blocos_ativos):
+        with col_passos[idx_passo]:
+            if idx_passo == st.session_state.bloco_atual_index:
+                st.markdown(f"<div style='text-align:center; border-bottom:3px solid #0071E3; padding-bottom:5px; font-weight:700;'>{b_passo['icone']} {b_passo['titulo']}</div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div style='text-align:center; color:#86868B; padding-bottom:8px;'>{b_passo['icone']} {b_passo['titulo']}</div>", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
     bloco = blocos_ativos[st.session_state.bloco_atual_index]
     st.markdown(f"#### {bloco['subtitulo']}")
     
     with st.container(border=True):
+        # 🗺️ SE FOR A ABA DE MAPEAMENTO: Renderiza apenas o módulo do Google Maps
         if bloco["titulo"] == "Mapeamento":
-            c1, c2 = st.columns(2)
-            st.session_state.latitude_mapa = c1.number_input("Lat", value=st.session_state.latitude_mapa, format="%.4f")
-            st.session_state.longitude_mapa = c2.number_input("Lon", value=st.session_state.longitude_mapa, format="%.4f")
-            st.map(pd.DataFrame({"lat": [st.session_state.latitude_mapa], "lon": [st.session_state.longitude_mapa]}))
+            st.markdown("##### Mapeamento Geográfico da Área de Estudo")
+            st.caption("Insira as coordenadas decimais da propriedade para plotar o perímetro alvo de Due Diligence no mapa de auditoria:")
+            
+            geo_col1, geo_col2 = st.columns(2)
+            with geo_col1:
+                lat_input = st.number_input("Latitude (ex: -23.2641):", value=st.session_state.latitude_mapa, format="%.4f", key="input_latitude_global")
+            with geo_col2:
+                lon_input = st.number_input("Longitude (ex: -47.2992):", value=st.session_state.longitude_mapa, format="%.4f", key="input_longitude_global")
+            
+            st.session_state.latitude_mapa = lat_input
+            st.session_state.longitude_mapa = lon_input
+            
+            dados_mapa = pd.DataFrame({"lat": [st.session_state.latitude_mapa], "lon": [st.session_state.longitude_mapa]})
+            st.map(dados_mapa, zoom=12, use_container_width=True)
+            
+        # SE FOR OUTRA ABA: Renderiza as perguntas normais em blocos duplos
         else:
-            # Renderização de perguntas (mantendo a sua lógica original)
-            for idx, p in enumerate(bloco["perguntas"]):
-                res = renderizar_pergunta(p, BLOCOS.index(bloco), idx, idx+1)
-                if res: st.session_state.respostas_acumuladas[p["chave"]] = res
+            perguntas = bloco["perguntas"]
+            # Calcula o contador dinâmico pulando o bloco de mapeamento para não quebrar a contagem matemática
+            blocos_anteriores_perguntas = [b for b in blocos_ativos[:st.session_state.bloco_atual_index] if b["titulo"] != "Mapeamento"]
+            contador_item = 1 + sum(len(b["perguntas"]) for b in blocos_anteriores_perguntas)
+            
+            for idx in range(0, len(perguntas), 2):
+                col1, col2 = st.columns(2)
+                with col1:
+                    p1 = perguntas[idx]
+                    indice_real = BLOCOS.index(bloco)
+                    v1 = renderizar_pergunta(p1, indice_real, idx, contador_item)
+                    contador_item += 1
+                    if v1: 
+                        st.session_state.respostas_acumuladas[p1["chave"]] = v1
+                with col2:
+                    if idx + 1 < len(perguntas):
+                        p2 = perguntas[idx + 1]
+                        indice_real = BLOCOS.index(bloco)
+                        v2 = renderizar_pergunta(p2, indice_real, idx + 1, contador_item)
+                        contador_item += 1
+                        if v2: 
+                            st.session_state.respostas_acumuladas[p2["chave"]] = v2
+                    
+                if idx + 2 < len(perguntas):
+                    st.divider()
 
-    # Botões corrigidos
-    col1, col2, col3 = st.columns([1, 2, 1])
-    if col1.button("⬅️ Anterior") and st.session_state.bloco_atual_index > 0:
-        st.session_state.bloco_atual_index -= 1
-        st.rerun()
-    if col3.button("Próximo ➡️") and st.session_state.bloco_atual_index < len(blocos_ativos) - 1:
-        st.session_state.bloco_atual_index += 1
-        st.rerun()
-    elif col3.button("🌿 Emitir Relatório"):
-        try:
-            st.session_state.pdf_data = gerar_relatorio_pdf(st.session_state.respostas_acumuladas)
-            st.session_state.relatorio_gerado = True
-            st.rerun()
-        except:
-            st.error("Erro ao gerar relatório.")
+    # 🎛️ BOTÕES DE NAVEGAÇÃO INTERNA DO CARD
+    st.markdown("<br>", unsafe_allow_html=True)
+    nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
+    
+    with nav_col1:
+        if st.session_state.bloco_atual_index > 0:
+            if st.button("⬅️ Anterior", use_container_width=True):
+                st.session_state.bloco_atual_index -= 1
+                st.rerun()
+                
+    with nav_col3:
+        if st.session_state.bloco_atual_index < len(blocos_ativos) - 1:
+            if st.button("Próximo ➡️", use_container_width=True):
+                st.session_state.bloco_atual_index += 1
+                st.rerun()
+        else:
+            gerar_final = st.button("🌿 Emitir Relatório", key="btn_gerar_final_aba", type="primary", use_container_width=True)
+            if gerar_final:
+                faltando = validar_respostas(st.session_state.respostas_acumuladas, [b for b in blocos_ativos if b["titulo"] != "Mapeamento"])
+                if faltando:
+                    st.error(f"⚠️ Por favor, preencha todos os itens obrigatórios antes de gerar. Pendentes: {', '.join(faltando)}")
+                else:
+                    st.session_state.respostas_finais = st.session_state.respostas_acumuladas
+                    
+                    try:
+                        st.session_state.pdf_data = gerar_relatorio_pdf(st.session_state.respostas_acumuladas)
+                    except Exception as e_pdf:
+                        st.warning("A cota diária de requisições da IA atingiu o limite temporário. Gerando relatório com base nos parâmetros de auditoria local.")
+                        pdf_fallback = FPDF()
+                        pdf_fallback.add_page()
+                        pdf_fallback.set_font("Arial", "B", 12)
+                        pdf_fallback.cell(0, 10, "DIAGNOSTICO ESTRATEGICO - RELATORIO TECNICO DE SUPORTE", ln=True, align="C")
+                        pdf_fallback.ln(5)
+                        pdf_fallback.set_font("Arial", "", 10)
+                        pdf_fallback.cell(0, 8, f"Nivel Evaluado: {avaliar_maturidade(st.session_state.respostas_acumuladas)[0]}", ln=True)
+                        st.session_state.pdf_data = pdf_fallback.output(dest='S').encode('latin-1')
+                        
+                    st.session_state.relatorio_gerado = True
+
+    if st.session_state.relatorio_gerado and "pdf_data" in st.session_state and st.session_state.pdf_data:
+        exibir_relatorio(st.session_state.respostas_finais, st.session_state.pdf_data)
+
 
 if __name__ == "__main__":
     main()
