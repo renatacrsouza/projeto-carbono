@@ -268,7 +268,7 @@ def aplicar_estilo() -> None:
             }
             div.stButton > button[kind="primary"]:hover { background: #0077ED; }
 
-            /* 🪄 TRUQUE DO ESPELHO: Move a barra lateral nativa de forma fixa para o canto direito */
+            /* 🪄 TRUQUE DO ESPELHO: Move a barra lateral para o canto direito */
             [data-testid="stSidebar"] {
                 left: auto !important;
                 right: 0 !important;
@@ -281,11 +281,31 @@ def aplicar_estilo() -> None:
                 left: auto !important;
                 right: 10px !important;
             }
+
+            /* 🎯 COMPACTAÇÃO DA IA (BARRA LATERAL) */
+            /* Diminui o espaçamento interno geral da barra lateral */
+            [data-testid="stSidebarUserContent"] {
+                padding-top: 1.5rem !important;
+                padding-bottom: 1rem !important;
+                gap: 0.5rem !important;
+            }
+            /* Reduz a distância gerada pelas linhas divisórias (<hr>) */
+            [data-testid="stSidebar"] hr {
+                margin: 0.8rem 0 !important;
+            }
+            /* Junta os balões de mensagens do chat para não ficarem tão distantes */
+            [data-testid="stSidebar"] [data-testid="stChatMessage"] {
+                padding: 0.6rem 0.8rem !important;
+                margin-bottom: 0.4rem !important;
+            }
+            /* Remove os espaços em branco vazios criados automaticamente pelo Streamlit */
+            [data-testid="stSidebar"] [data-testid="element-container"] {
+                margin-bottom: 0.2rem !important;
+            }
         </style>
         """,
         unsafe_allow_html=True,
     )
-
 
 def extrair_numero_pergunta(chave: str) -> str:
     return chave.split(".")[0].strip()
