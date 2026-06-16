@@ -535,7 +535,7 @@ def main() -> None:
 
     contador_item = 1
 
-    for tab, bloco in zip(tabs, blocos_ativos):
+    for i, (tab, bloco) in enumerate(zip(tabs, blocos_ativos)):
         with tab:
             st.markdown(f"#### {bloco['subtitulo']}")
             
@@ -563,6 +563,34 @@ def main() -> None:
                         
                     if idx + 2 < len(perguntas):
                         st.divider()
+
+            # 🎛️ BOTÕES DE NAVEGAÇÃO NO RODAPÉ DE CADA ABA
+            st.markdown("<br>", unsafe_allow_html=True)
+            nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
+            
+            with nav_col1:
+                # Mostra o botão "Voltar" a partir da segunda aba
+                if i > 0:
+                    if st.button(f"⬅️ Anterior", key=f"btn_voltar_{i}", use_container_width=True):
+                        st.info(f"Clique na aba '{tab_labels[i-1]}' acima para voltar.")
+            
+            with nav_col3:
+                # Se não for a última aba, mostra o botão "Próximo"
+                if i < len(blocos_ativos) - 1:
+                    if st.button(f"Próximo ➡️", key=f"btn_proximo_{i}", use_container_width=True):
+                        st.success(f"Discorra para a aba '{tab_labels[i+1]}' acima para continuar.")
+                # Na última aba, exibe o botão mestre para emitir o relatório desse bloco
+                else:
+                    gerar_final = st.button("🌿 Emitir Relatório", key="btn_gerar_final_aba", type="primary", use_container_width=True)
+                    if gerar_final:
+                        faltando = validar_respostas(respostas_parciais, blocos_ativos)
+                        if faltando:
+                            st.error(f"⚠️ Por favor, preencha todos os itens obrigatórios antes de gerar. Pendentes: {', '.join(faltando)}")
+                        else:
+                            st.session_state.respostas_finais = respostas_parciais
+                            st.session_state.pdf_data = gerar_relatorio_pdf(respostas_parciais)
+                            st.session_state.relatorio_gerado = True
+                            st.balloons()
 
     total_perguntas = sum(len(b["perguntas"]) for b in blocos_ativos)
     respondidas = len(respostas_parciais)
