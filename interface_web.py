@@ -1,13 +1,12 @@
-
 #!/usr/bin/env python3
 """Interface web premium do diagnóstico de carbono - Estilo Minimalista Apple."""
 
+import time
 from datetime import datetime
 from typing import Optional
 import streamlit as st
 from fpdf import FPDF
 from google import genai
-import time  # 🟢 ADICIONE ESSA LINHA AQUI!
 
 from diagnostico import (
     avaliar_maturidade,
@@ -110,6 +109,7 @@ def gerar_template_pdf() -> bytes:
             pdf.ln(1)
             
     return pdf.output(dest='S').encode('latin-1')
+
 
 # ── Estrutura do questionário ────────────────────────────────────────────────
 BLOCOS = [
@@ -325,6 +325,7 @@ def validar_respostas(respostas: dict[str, str], blocos_ativos: list) -> list[st
                 faltando.append(f"Item {extrair_numero_pergunta(pergunta['chave'])}")
     return faltando
 
+
 def calcular_percentual_maturidade(respostas: dict[str, str]) -> int:
     nivel, texto = avaliar_maturidade(respostas)
     inicio = texto.find("(") + 1
@@ -379,7 +380,7 @@ def main() -> None:
     st.set_page_config(page_title="Carbon Diagnosis", page_icon="🌱", layout="wide", initial_sidebar_state="expanded")
     aplicar_estilo()
 
-   # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (SUPORTE A DOCUMENTOS)
+    # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (ESTIUO GEMINI PREMIUM)
     with st.sidebar:
         # ── 1. TOPO FIXO (Cabeçalho do Copiloto) ─────────────────────────────
         st.header("🌱 Copiloto de Carbono")
@@ -391,9 +392,10 @@ def main() -> None:
         
         if "historico_chat" not in st.session_state:
             st.session_state.historico_chat = [
-                {"role": "assistant", "content": "Olá! Sou seu assistente de due diligence. Se não souber como responder alguma pergunta do formulário ao lado esquerdo, ou quiser que eu analise o documento anexo, é só me chamar!"}
+                {"role": "assistant", "content": "Olá! Sou seu assistente de due diligence. Se não souber como responder alguma pergunta do formulário ao lado esquerdo, ou quiser que eu análise o documento anexo, é só me chamar!"}
             ]
             
+        # Contêiner invisível com rolagem própria para as mensagens do chat
         caixa_historico = st.container(height=350, border=False)
         
         with caixa_historico:
@@ -401,39 +403,42 @@ def main() -> None:
                 with st.chat_message(mensagem["role"]):
                     st.write(mensagem["content"])
                     
-        # ── 3. RODAPÉ FIXO: ÁREA DE ANEXAR DOCUMENTOS ────────────────────────
+        # ── 3. CAIXA DE TEXTO DO CHAT (DIGITAÇÃO LIVRE) ───────────────────────
+        texto_digitado = st.chat_input("Ex: O que é adicionalidade? Ou analise o anexo...", key="chat_input_sidebar")
+        
+        # ── 4. RODAPÉ FIXO (Área de Anexar Documentos posicionada embaixo da escrita) ──
+        st.markdown("---")
         st.subheader("Anexar Documentos")
         arquivo_anexado = st.file_uploader(
             "Envie a Matrícula, CAR ou PDD (PDF)", 
             type=["pdf"], 
-            help="A IA lerá o documento para te ajudar a responder o formulário.",
-            key="uploader_sidebar"
+            help="A IA lerá o documento para te ajudar a responder o formulário ao lado.",
+            key="uploader_ia_definitivo"
         )
         
         if arquivo_anexado:
             st.success("📎 Documento pronto para análise!")
-        st.markdown("---")
 
-        # ── 4. CAIXA DE TEXTO DO CHAT (PROCESSA TEXTO + PDF) ─────────────────
-        if pergunta_usuario := st.chat_input("Ex: Analise o CAR que acabei de anexar", key="chat_input_sidebar"):
+        # ── 5. PROCESSAMENTO DO ENVIO (TEXTO + PDF OPCIONAL) ──────────────────
+        if texto_digitado:
+            # Exibe a pergunta do usuário no visor do chat imediatamente
             with caixa_historico:
                 with st.chat_message("user"):
-                    st.write(pergunta_usuario)
-            st.session_state.historico_chat.append({"role": "user", "content": pergunta_usuario})
+                    st.write(texto_digitado)
+            st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
             
+            # Dispara a chamada para o cérebro do Gemini
             with caixa_historico:
                 with st.chat_message("assistant"):
-                    with st.spinner("Analisando documentos e gerando resposta..."):
+                    with st.spinner("Analisando e gerando resposta..."):
                         try:
                             api_key = st.secrets.get("GEMINI_API_KEY")
                             
                             if api_key:
                                 client = genai.Client(api_key=api_key)
-                                
-                                # 🪄 TRUQUE MÁGICO: Prepara os conteúdos para a IA
-                                # Se tiver arquivo, nós lemos os bytes dele e enviamos junto!
                                 conteudos_enviar = []
                                 
+                                # Se o usuário carregou um PDF, lê os bytes e anexa na chamada
                                 if arquivo_anexado:
                                     bytes_pdf = arquivo_anexado.read()
                                     conteudos_enviar.append({
@@ -441,19 +446,20 @@ def main() -> None:
                                         "data": bytes_pdf
                                     })
                                 
+                                # Constrói o prompt seguro de contexto técnico
                                 contexto_prompt = (
                                     "Você é um assistente de suporte técnico ajudando um cliente a preencher um diagnóstico de mercado de carbono. "
-                                    "Se um documento em PDF foi enviado junto com esta mensagem, analise as informações dele (como CAR, Matrícula ou áreas) "
-                                    f"para responder de forma curta, clara e direta à seguinte dúvida do usuário: {pergunta_usuario}"
+                                    "Se um documento em PDF foi anexado a esta chamada, use os dados contidos nele para embasar sua resposta. "
+                                    f"Responda de forma curta, clara e direta à seguinte dúvida do usuário: {texto_digitado}"
                                 )
                                 conteudos_enviar.append(contexto_prompt)
                                 
-                                # Escudo contra o erro 503 do servidor da Google
+                                # Escudo protetor contra erro 503 (3 tentativas automáticas)
                                 for tentativa in range(3):
                                     try:
                                         resposta = client.models.generate_content(
                                             model='gemini-2.5-flash',
-                                            contents=conteudos_enviar, # Enviando o combo Texto + PDF!
+                                            contents=conteudos_enviar,
                                         )
                                         texto_resposta = resposta.text
                                         break
@@ -463,7 +469,7 @@ def main() -> None:
                                             continue
                                         raise e_chat
                             else:
-                                texto_resposta = "⚠️ Chave 'GEMINI_API_KEY' não encontrada nos Secrets."
+                                texto_resposta = "⚠️ Chave 'GEMINI_API_KEY' não encontrada nos Secrets do Streamlit."
                                 
                         except Exception as e:
                             print(f"Erro detalhado da API do Gemini: {e}")
@@ -471,21 +477,9 @@ def main() -> None:
                         
                         st.write(texto_resposta)
             
+            # Grava a resposta no histórico persistente e recarrega a página de forma suave
             st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
             st.rerun()
-
-        # ── 4. RODAPÉ FIXO (Área de Anexar Documentos posicionada embaixo da escrita) ──
-        st.markdown("---")
-        st.subheader("Anexar Documentos")
-        arquivo_anexado = st.file_uploader(
-            "Envie a Matrícula, CAR ou PDD (PDF)", 
-            type=["pdf"], 
-            help="A IA lerá o documento para te ajudar a responder o formulário.",
-            key="uploader_sidebar"
-        )
-        
-        if arquivo_anexado:
-            st.success("Documento carregado com sucesso!")
 
     # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
