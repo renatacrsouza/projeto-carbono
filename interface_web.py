@@ -8,6 +8,7 @@ import streamlit as st
 from fpdf import FPDF
 from google import genai
 from google.genai import types
+import pandas as pd  # 🟢 Adicionado para gerenciar os dados geográficos do mapa
 
 from diagnostico import (
     avaliar_maturidade,
@@ -405,6 +406,12 @@ def main() -> None:
     if "respostas_acumuladas" not in st.session_state:
         st.session_state.respostas_acumuladas = {}
 
+    # Coordenadas padrão de Itu/SP como inicial do mapa corporativo
+    if "latitude_mapa" not in st.session_state:
+        st.session_state.latitude_mapa = -23.2641
+    if "longitude_mapa" not in st.session_state:
+        st.session_state.longitude_mapa = -47.2992
+
     # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (ESTILO GEMINI PREMIUM)
     with st.sidebar:
         st.image("logo.png", width=100)
@@ -452,13 +459,13 @@ def main() -> None:
                             if api_key:
                                 client = genai.Client(api_key=api_key)
                                 contexto_prompt = (
-                                    "Você é o Copiloto de Carbono, um especialista sênior em Due Diligence e estruturação de projetos de crédito de carbono no Brasil. "
+                                    "Você é o Copiloto de Carbono, um specialist sênior em Due Diligence e estruturação de projetos de crédito de carbono no Brasil. "
                                     "Sua missão é analisar as dúvidas do usuário e os documentos anexados (como CAR, Matrículas ou Inventários) com base rigorosa nas seguintes referências:\n"
-                                    "1. GHG Protocol: Classifique e oriente sobre limites organizacionais e escopos de emissão (Escopos 1, 2 e 3)[cite: 3, 7].\n"
-                                    "2. Diretrizes AFOLU: Avalie critérios de elegibilidade do solo, histórico de desmatamento/reflorestamento (ARR/REDD+) e o risco de Vazamento (Leakage)[cite: 10].\n"
-                                    "3. Adicionalidade (MDL): Avalie se a atividade proposta demonstra barreira financeira, tecnológica ou regulatória, comprovando que o projeto não ocorreria sem o incentivo dos créditos[cite: 2, 4, 6].\n"
-                                    "4. Manual de Verificadores: Seja criterioso com a consistência de dados. Exija perímetros digitais claros (arquivos KML/SHP) e consistência entre CAR e Matrícula[cite: 8].\n"
-                                    "5. Regulamentação SBCE: Oriente sobre o enquadramento no Sistema Brasileiro de Comércio de Emissões para quem emite acima de 25.000 tCO2e/ano[cite: 4, 7].\n\n"
+                                    "1. GHG Protocol: Classifique e oriente sobre limites organizacionais e escopos de emissão (Escopos 1, 2 e 3).\n"
+                                    "2. Diretrizes AFOLU: Avalie critérios de elegibilidade do solo, histórico de desmatamento/reflorestamento (ARR/REDD+) e o risco de Vazamento (Leakage).\n"
+                                    "3. Adicionalidade (MDL): Avalie se a atividade proposta demonstra barreira financeira, tecnológica ou regulatória, comprovando que o projeto não ocorreria sem o incentivo dos créditos.\n"
+                                    "4. Manual de Verificadores: Seja criterioso com a consistência de dados. Exija perímetros digitais claros (arquivos KML/SHP) e consistência entre CAR e Matrícula.\n"
+                                    "5. Regulamentação SBCE: Oriente sobre o enquadramento no Sistema Brasileiro de Comércio de Emissões para quem emite acima de 25.000 tCO2e/ano.\n\n"
                                     "Responda de forma altamente profissional, porém clara, direta e executiva. Se houver um PDF anexado, use seus dados para fundamentar tecnicamente o diagnóstico.\n"
                                     f"Dúvida do usuário: {texto_digitado}"
                                 )
@@ -471,7 +478,7 @@ def main() -> None:
                                 for tentativa in range(3):
                                     try:
                                         resposta = client.models.generate_content(model='gemini-2.5-flash', contents=conteudos_enviar)
-                                        texto_resposta = resposta.text
+                                        texto_resposta = response.text
                                         break
                                     except Exception as e_chat:
                                         if "503" in str(e_chat) and tentativa < 2:
@@ -517,7 +524,16 @@ def main() -> None:
     if st.session_state.bloco_atual_index >= len(blocos_ativos):
         st.session_state.bloco_atual_index = 0
 
-    # 🗺️ MENU DE NAVEGAÇÃO PROGRESSIVO (Linha de passos superior)
+    # 📊 1. BARRA DE PROGRESSO EM TEMPO REAL POR PERGUNTA RESPONDIDA
+    total_perguntas = sum(len(b["perguntas"]) for b in blocos_ativos)
+    respondidas = len(st.session_state.respostas_acumuladas)
+    percentual_preenchido = int((respondidas / total_perguntas) * 100) if total_perguntas > 0 else 0
+    
+    st.markdown(f"**Progresso Completo do Diagnóstico: {percentual_preenchido}%** ({respondidas} de {total_perguntas} itens concluídos)")
+    st.progress(respondidas / total_perguntas if total_perguntas > 0 else 0.0)
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 🗺️ MENU DE NAVEGAÇÃO PROGRESSIVO
     col_passos = st.columns(len(blocos_ativos))
     for idx_passo, b_passo in enumerate(blocos_ativos):
         with col_passos[idx_passo]:
@@ -556,7 +572,27 @@ def main() -> None:
             if idx + 2 < len(perguntas):
                 st.divider()
 
-    # 🎛️ BOTÕES DE NAVEGAÇÃO INTERNA DO CARD (Eliminado o botão global inferior redundante)
+        # 🟢 2. INCLUSÃO DO MAPA INTERATIVO NO PRIMEIRO BLOCO (IDENTIFICAÇÃO)
+        if st.session_state.bloco_atual_index == 0:
+            st.divider()
+            st.markdown("##### 🗺️ Mapeamento Geográfico da Área de Estudo")
+            st.caption("Insira as coordenadas decimais da propriedade para plotar o perímetro alvo de Due Diligence no mapa de auditoria:")
+            
+            geo_col1, geo_col2 = st.columns(2)
+            with geo_col1:
+                lat_input = st.number_input("Latitude (ex: -23.2641):", value=st.session_state.latitude_mapa, format="%.4f", key="input_latitude_global")
+            with geo_col2:
+                lon_input = st.number_input("Longitude (ex: -47.2992):", value=st.session_state.longitude_mapa, format="%.4f", key="input_longitude_global")
+            
+            # Atualiza o estado da sessão na hora
+            st.session_state.latitude_mapa = lat_input
+            st.session_state.longitude_mapa = lon_input
+            
+            # Desenha o mapa nativo interativo do Streamlit (Alimentado por OpenStreetMap/Maps corporativo)
+            dados_mapa = pd.DataFrame({"lat": [st.session_state.latitude_mapa], "lon": [st.session_state.longitude_mapa]})
+            st.map(dados_mapa, zoom=12, use_container_width=True)
+
+    # 🎛️ BOTÕES DE NAVEGAÇÃO INTERNA DO CARD
     st.markdown("<br>", unsafe_allow_html=True)
     nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
     
@@ -572,7 +608,6 @@ def main() -> None:
                 st.session_state.bloco_atual_index += 1
                 st.rerun()
         else:
-            # 🌿 BOTÃO ÚNICO DE EMISSÃO: Só aparece no rodapé do último bloco
             gerar_final = st.button("🌿 Emitir Relatório", key="btn_gerar_final_aba", type="primary", use_container_width=True)
             if gerar_final:
                 faltando = validar_respostas(st.session_state.respostas_acumuladas, blocos_ativos)
@@ -581,11 +616,9 @@ def main() -> None:
                 else:
                     st.session_state.respostas_finais = st.session_state.respostas_acumuladas
                     
-                    # 🛡️ TRATAMENTO CONTRA O ERRO DE COTA DA API (RESOURCE_EXHAUSTED)
                     try:
                         st.session_state.pdf_data = gerar_relatorio_pdf(st.session_state.respostas_acumuladas)
                     except Exception as e_pdf:
-                        # Se estourar o limite de requisições, gera o relatório com base no Fallback Estruturado para o PDF continuar funcionando de forma limpa
                         st.warning("A cota diária de requisições da IA atingiu o limite temporário. Gerando relatório com base nos parâmetros de auditoria local.")
                         pdf_fallback = FPDF()
                         pdf_fallback.add_page()
@@ -597,11 +630,6 @@ def main() -> None:
                         st.session_state.pdf_data = pdf_fallback.output(dest='S').encode('latin-1')
                         
                     st.session_state.relatorio_gerado = True
-
-    # Elementos de contagem de progresso à esquerda
-    total_perguntas = sum(len(b["perguntas"]) for b in blocos_ativos)
-    respondidas = len(st.session_state.respostas_acumuladas)
-    st.metric("Itens Respondidos", f"{respondidas}/{total_perguntas}")
 
     if st.session_state.relatorio_gerado and "pdf_data" in st.session_state and st.session_state.pdf_data:
         exibir_relatorio(st.session_state.respostas_finais, st.session_state.pdf_data)
