@@ -109,10 +109,13 @@ def gerar_template_pdf() -> bytes:
             pdf.cell(190, 5.5, "__________________________________________________________________________________________", ln=True)
             pdf.ln(1)
             
-    output = pdf.output(dest='S')
-    if isinstance(output, str):
-        return output.encode('latin-1')
-    return output
+    # Substitua o 'return pdf.output(dest='S')' por estas linhas:
+    resultado = pdf.output(dest='S')
+    
+    # Se for string, converte para bytes. Se já for bytes, retorna como está.
+    if isinstance(resultado, str):
+        return resultado.encode('latin-1')
+    return bytes(resultado)
 
 
 # ── Estrutura do questionário ────────────────────────────────────────────────
