@@ -306,11 +306,11 @@ def extrair_numero_pergunta(chave: str) -> str:
     return chave.split(".")[0].strip()
 
 
-def renderizar_pergunta(pergunta: dict, indice_bloco: int, indice_pergunta: int) -> Optional[str]:
-    numero = extrair_numero_pergunta(pergunta["chave"])
+def renderizar_pergunta(pergunta: dict, indice_bloco: int, indice_pergunta: int, numero_sequencial: int) -> Optional[str]:
+    # 🟢 CORREÇÃO: Em vez de quebrar a string, usamos o número sequencial exato e contínuo
     key_base = f"b{indice_bloco}_q{indice_pergunta}"
 
-    st.markdown(f'<span class="pergunta-num">ITEM {numero}</span>', unsafe_allow_html=True)
+    st.markdown(f'<span class="pergunta-num">ITEM {numero_sequencial}</span>', unsafe_allow_html=True)
     st.markdown(f"##### {pergunta['texto']}")
     if pergunta.get("ajuda"):
         st.caption(pergunta["ajuda"])
@@ -534,6 +534,9 @@ def main() -> None:
     tabs = st.tabs(tab_labels)
     respostas_parciais: dict[str, str] = {}
 
+    # 🪄 CONTADOR INTELIGENTE: Começa no 1 e vai somando de 1 em 1 de forma contínua
+    contador_item = 1
+
     for tab, bloco in zip(tabs, blocos_ativos):
         with tab:
             st.markdown(f"#### {bloco['subtitulo']}")
@@ -546,7 +549,9 @@ def main() -> None:
                     with col1:
                         p1 = perguntas[idx]
                         indice_real = BLOCOS.index(bloco)
-                        v1 = renderizar_pergunta(p1, indice_real, idx)
+                        # Passamos o contador_item e somamos +1 depois
+                        v1 = renderizar_pergunta(p1, indice_real, idx, contador_item)
+                        contador_item += 1
                         if v1: 
                             respostas_parciais[p1["chave"]] = v1
                             
@@ -554,7 +559,9 @@ def main() -> None:
                         if idx + 1 < len(perguntas):
                             p2 = perguntas[idx + 1]
                             indice_real = BLOCOS.index(bloco)
-                            v2 = renderizar_pergunta(p2, indice_real, idx + 1)
+                            # Passamos o contador_item e somamos +1 depois
+                            v2 = renderizar_pergunta(p2, indice_real, idx + 1, contador_item)
+                            contador_item += 1
                             if v2: 
                                 respostas_parciais[p2["chave"]] = v2
                         
