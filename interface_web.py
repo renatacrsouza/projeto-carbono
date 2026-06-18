@@ -229,8 +229,8 @@ def aplicar_estilo() -> None:
 
             /* 2. Barra Lateral (IA) na Direita */
             [data-testid="stSidebar"] {
-                width: 300px !important;
-                min-width: 300px !important;
+                width: 400px !important;
+                min-width: 400px !important;
                 right: 0 !important;
                 left: auto !important;
                 background-color: #F8F9FA !important;
