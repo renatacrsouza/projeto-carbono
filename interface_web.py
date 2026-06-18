@@ -426,13 +426,11 @@ def main() -> None:
 
             with caixa_historico:
                 with st.chat_message("assistant"):
-                    # --- STATUS PROFISSIONAL ---
                     with st.status("Processando due diligence...", expanded=True) as status:
                         api_key = st.secrets.get("GEMINI_API_KEY")
                         if api_key:
                             client = genai.Client(api_key=api_key)
                             
-                            # --- SYSTEM INSTRUCTION COM TABELA DE RISCO ---
                             system_instruction = (
                                 "Você é o Copiloto de Carbono. "
                                 "REGRAS: "
@@ -464,7 +462,7 @@ def main() -> None:
                     st.markdown(texto_resposta)
             
             st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
-            st.rerun()
+            st.rerun())
 
     # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
