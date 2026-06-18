@@ -425,49 +425,49 @@ def main() -> None:
                 st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
 
                 with caixa_historico:
-                with st.chat_message("assistant"):
-                    try:
-                        # 1. Carregamento e Autenticação
-                        api_key = st.secrets.get("GEMINI_API_KEY")
-                        if not api_key:
-                            texto_resposta = "❌ Erro: Chave GEMINI_API_KEY não encontrada no Secrets."
-                        else:
-                            client = genai.Client(api_key=api_key)
-                            
-                            # 2. Configuração do Sistema
-                            system_instruction = (
-                                "Você é o Copiloto de Carbono da CarbonMind. "
-                                "REGRAS: 1. Se houver documento, entregue uma 'Tabela de Auditoria' (Item | Status | Risco). "
-                                "2. Seja direto e executivo. 3. Identifique gaps da Lei 15.042/24."
-                            )
-                            
-                            # 3. Preparação do conteúdo
-                            conteudos = [texto_digitado]
-                            if arquivo_anexado:
-                                arquivo_anexado.seek(0)
-                                pdf_part = types.Part.from_bytes(
-                                    data=arquivo_anexado.read(), 
-                                    mime_type="application/pdf"
+                    with st.chat_message("assistant"):
+                        try:
+                            # 1. Carregamento e Autenticação
+                            api_key = st.secrets.get("GEMINI_API_KEY")
+                            if not api_key:
+                                texto_resposta = "❌ Erro: Chave GEMINI_API_KEY não encontrada no Secrets."
+                            else:
+                                client = genai.Client(api_key=api_key)
+                                
+                                # 2. Configuração do Sistema
+                                system_instruction = (
+                                    "Você é o Copiloto de Carbono da CarbonMind. "
+                                    "REGRAS: 1. Se houver documento, entregue uma 'Tabela de Auditoria' (Item | Status | Risco). "
+                                    "2. Seja direto e executivo. 3. Identifique gaps da Lei 15.042/24."
                                 )
-                                conteudos.append(pdf_part)
-                            
-                            # 4. Chamada do Modelo
-                            st.write("🔍 Consultando normas...")
-                            resposta = client.models.generate_content(
-                                model='gemini-1.5-flash',
-                                contents=conteudos,
-                                config=types.GenerateContentConfig(
-                                    system_instruction=system_instruction,
-                                    temperature=0.2
+                                
+                                # 3. Preparação do conteúdo
+                                conteudos = [texto_digitado]
+                                if arquivo_anexado:
+                                    arquivo_anexado.seek(0)
+                                    pdf_part = types.Part.from_bytes(
+                                        data=arquivo_anexado.read(), 
+                                        mime_type="application/pdf"
+                                    )
+                                    conteudos.append(pdf_part)
+                                
+                                # 4. Chamada do Modelo
+                                st.write("🔍 Consultando normas...")
+                                resposta = client.models.generate_content(
+                                    model='gemini-1.5-flash',
+                                    contents=conteudos,
+                                    config=types.GenerateContentConfig(
+                                        system_instruction=system_instruction,
+                                        temperature=0.2
+                                    )
                                 )
-                            )
-                            texto_resposta = resposta.text
-                            
-                    except Exception as e:
-                        st.error(f"❌ DEBUG: {type(e).__name__} - {str(e)}")
-                        texto_resposta = "Falha na comunicação com o servidor."
+                                texto_resposta = resposta.text
+                                
+                        except Exception as e:
+                            st.error(f"❌ DEBUG: {type(e).__name__} - {str(e)}")
+                            texto_resposta = "Falha na comunicação com o servidor."
 
-                    st.markdown(texto_resposta)
+                        st.markdown(texto_resposta)
             
             st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
             st.rerun()
