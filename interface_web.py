@@ -468,8 +468,21 @@ def main() -> None:
     with c_btn:
         st.download_button(label="⬇️ Baixar Template de Suporte (PDF)", data=template_pdf, file_name="template_suporte_carbono.pdf", mime="application/pdf", use_container_width=True)
     with c_radio:
-        jornada = st.radio("Jornada do Projeto:", ["✨ Estruturar do zero (Frente 1 — Estruturação)", "🔍 Validar ativo existente (Frente 2 — Pré-Auditoria)"], index=0, horizontal=True)
+        # Dicionário com os nomes e as descrições técnicas
+        opcoes = {
+            "🚀 Estruturação (Frente 1)": "Foco em projetos do zero: baseline, adicionalidade e viabilidade técnica.",
+            "🔎 Pré-Auditoria (Frente 2)": "Revisão de ativos existentes: conformidade documental e análise de riscos."
+        }
         
+        jornada = st.radio(
+            "Jornada do Projeto:", 
+            list(opcoes.keys()), 
+            index=0, 
+            horizontal=True
+        )
+        
+        # Mostra a descrição técnica de forma sutil logo abaixo
+        st.caption(f"**Contexto:** {opcoes[jornada]}")
     st.divider()
 
     if "relatorio_gerado" not in st.session_state:
