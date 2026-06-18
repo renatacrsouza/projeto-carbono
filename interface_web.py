@@ -400,23 +400,17 @@ def main() -> None:
         texto_digitado = st.chat_input("Ex: O que é adicionalidade? Ou analise o anexo...", key="chat_input_sidebar")
         st.markdown("---")
         st.subheader("Anexar Documentos")
-        arquivo_anexado = st.file_uploader(
-            "Envie a Matrícula, CAR ou PDD (PDF)", 
-            type=["pdf"], 
-            help="A IA lerá o documento para te ajudar a responder o formulário ao lado.",
-            key="uploader_ia_definitivo"
-        )
+        arquivo_anexado = st.file_uploader("Envie a Matrícula, CAR ou PDD (PDF)", type=["pdf"], key="uploader_ia_definitivo")
         
         if arquivo_anexado:
             st.success("📎 Documento pronto para análise!")
 
-       if texto_digitado:
+        if texto_digitado:
             with caixa_historico:
                 with st.chat_message("user"):
                     st.write(texto_digitado)
             st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
             
-            # --- RASTREABILIDADE NA SIDEBAR ---
             with st.sidebar:
                 st.subheader("Análise Atual")
                 if arquivo_anexado:
@@ -430,40 +424,32 @@ def main() -> None:
                         api_key = st.secrets.get("GEMINI_API_KEY")
                         if api_key:
                             client = genai.Client(api_key=api_key)
-                            
                             system_instruction = (
                                 "Você é o Copiloto de Carbono. "
-                                "REGRAS: "
-                                "1. Analise documentos e crie uma 'Tabela de Verificação' (Colunas: Item, Status, Risco). "
-                                "2. Máximo de 2 parágrafos após a tabela. "
-                                "3. Linguagem executiva."
+                                "REGRAS: 1. Analise documentos e crie uma 'Tabela de Verificação' (Itens: Item, Status, Risco). "
+                                "2. Máximo de 2 parágrafos. 3. Linguagem executiva."
                             )
-                            
                             conteudos = [texto_digitado]
                             if arquivo_anexado:
                                 bytes_pdf = arquivo_anexado.read()
                                 pdf_part = types.Part.from_bytes(data=bytes_pdf, mime_type="application/pdf")
                                 conteudos.append(pdf_part)
                             
-                            st.write("Consultando normas técnicas...")
+                            st.write("Consultando normas...")
                             resposta = client.models.generate_content(
                                 model='gemini-2.5-flash',
                                 contents=conteudos,
-                                config=types.GenerateContentConfig(
-                                    system_instruction=system_instruction,
-                                    temperature=0.2
-                                )
+                                config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.2)
                             )
                             texto_resposta = resposta.text
                             status.update(label="Análise concluída!", state="complete", expanded=False)
                         else:
                             texto_resposta = "⚠️ API Key não configurada."
-                    
                     st.markdown(texto_resposta)
             
             st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
             st.rerun()
-            
+
     # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
 
