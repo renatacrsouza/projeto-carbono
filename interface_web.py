@@ -426,10 +426,10 @@ def main() -> None:
                                 system_instruction = (
                                     "Você é o Copiloto de Carbono. "
                                     "REGRAS DE OURO: "
-                                    "1. Respostas Curtas: Máximo 3 parágrafos. "
-                                    "2. Tom Executivo: Nada de 'Olá', 'Como especialista', ou explicações enciclopédicas. Vá direto à resposta técnica. "
-                                    "3. Foco em Prática: Se perguntarem 'o que é', defina e aplique imediatamente ao contexto de Due Diligence (ex: risco de auditoria, conformidade, ou valor de mercado). "
-                                    "4. Ação: Sempre encerre sugerindo a análise do documento ou próximo passo prático."
+                                    "1. Respostas Curtas: Máximo 2 parágrafos. "
+                                    "2. Sem introduções. Vá direto ao risco ou análise técnica."
+                                    "3. Se perguntarem conceitos, defina em uma frase e peça o documento para aplicar."
+                                    "4. Linguagem executiva, curta e objetiva."
                                     )
     
                                 conteudos_enviar = [texto_digitado]
