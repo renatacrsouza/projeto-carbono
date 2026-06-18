@@ -425,43 +425,43 @@ def main() -> None:
                 st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
 
                 with caixa_historico:
-                with st.chat_message("assistant"):
-                    try:
-                        # Teste de conexão e execução
-                        api_key = st.secrets["GEMINI_API_KEY"]
-                        client = genai.Client(api_key=api_key)
-                        
-                        system_instruction = (
-                            "Você é o Copiloto de Carbono. "
-                            "REGRAS: 1. Entregue tabela de auditoria (Item | Status | Risco). "
-                            "2. Seja direto e executivo."
-                        )
-                        
-                        conteudos = [texto_digitado]
-                        if arquivo_anexado:
-                            arquivo_anexado.seek(0)
-                            pdf_part = types.Part.from_bytes(
-                                data=arquivo_anexado.read(), 
-                                mime_type="application/pdf"
+                    with st.chat_message("assistant"):
+                        try:
+                            # Teste de conexão e execução
+                            api_key = st.secrets["GEMINI_API_KEY"]
+                            client = genai.Client(api_key=api_key)
+                            
+                            system_instruction = (
+                                "Você é o Copiloto de Carbono. "
+                                "REGRAS: 1. Entregue tabela de auditoria (Item | Status | Risco). "
+                                "2. Seja direto e executivo."
                             )
-                            conteudos.append(pdf_part)
-                        
-                        resposta = client.models.generate_content(
-                            model='gemini-1.5-flash',
-                            contents=conteudos,
-                            config=types.GenerateContentConfig(
-                                system_instruction=system_instruction,
-                                temperature=0.2
+                            
+                            conteudos = [texto_digitado]
+                            if arquivo_anexado:
+                                arquivo_anexado.seek(0)
+                                pdf_part = types.Part.from_bytes(
+                                    data=arquivo_anexado.read(), 
+                                    mime_type="application/pdf"
+                                )
+                                conteudos.append(pdf_part)
+                            
+                            resposta = client.models.generate_content(
+                                model='gemini-1.5-flash',
+                                contents=conteudos,
+                                config=types.GenerateContentConfig(
+                                    system_instruction=system_instruction,
+                                    temperature=0.2
+                                )
                             )
-                        )
-                        texto_resposta = resposta.text
-                    except Exception as e:
-                        texto_resposta = f"❌ Erro na conexão: {str(e)}"
-                    
-                    st.markdown(texto_resposta)
-            
-            st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
-            st.rerun()
+                            texto_resposta = resposta.text
+                        except Exception as e:
+                            texto_resposta = f"❌ Erro na conexão: {str(e)}"
+                        
+                        st.markdown(texto_resposta)
+                
+                st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
+                st.rerun()
 
     # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
