@@ -418,51 +418,33 @@ def main() -> None:
                 else:
                     st.info("Nenhum doc. anexado.")
 
+            if texto_digitado:
+            with caixa_historico:
+                with st.chat_message("user"):
+                    st.write(texto_digitado)
+            st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
+
             with caixa_historico:
                 with st.chat_message("assistant"):
-                    with st.status("Processando due diligence...", expanded=True) as status:
-                        api_key = st.secrets.get("GEMINI_API_KEY")
-                        if not api_key:
-                            st.error("❌ Erro: Chave não encontrada no Secrets.")
-                        else:
-                            try:
-                                client = genai.Client(api_key=api_key)
-                                # Usando o 1.5-flash como garantia de compatibilidade
-                                model_name = 'gemini-1.5-flash'
-                                resposta = client.models.generate_content(
+                    # Teste direto e simplificado
+                    api_key = st.secrets.get("GEMINI_API_KEY")
+                    if not api_key:
+                        st.error("❌ Erro: Chave não encontrada no Secrets.")
+                        texto_resposta = "Erro de configuração."
+                    else:
+                        try:
+                            client = genai.Client(api_key=api_key)
+                            # Teste ultra-simplificado
+                            resposta = client.models.generate_content(
                                 model='gemini-1.5-flash',
                                 contents="Diga apenas 'Conectado'."
                             )
-                            st.success(f"✅ Sucesso: {resposta.text}")
-                                system_instruction = (
-                                    "Você é o Copiloto de Carbono da CarbonMind. "
-                                    "REGRAS: 1. Se houver documento, entregue uma 'Tabela de Auditoria' (Item | Status | Risco). "
-                                    "2. Seja direto e executivo. 3. Identifique gaps da Lei 15.042/24."
-                                )
-                                
-                                conteudos = [texto_digitado]
-                                if arquivo_anexado:
-                                    # Reinicia o ponteiro do arquivo para leitura
-                                    arquivo_anexado.seek(0)
-                                    bytes_pdf = arquivo_anexado.read()
-                                    pdf_part = types.Part.from_bytes(data=bytes_pdf, mime_type="application/pdf")
-                                    conteudos.append(pdf_part)
-                                
-                                st.write("Consultando normas...")
-                                resposta = client.models.generate_content(
-                                    model=model_name,
-                                    contents=conteudos,
-                                    config=types.GenerateContentConfig(
-                                        system_instruction=system_instruction, 
-                                        temperature=0.2
-                                    )
-                                )
-                                texto_resposta = resposta.text
-                                status.update(label="Análise concluída!", state="complete", expanded=False)
-                            except Exception as e:
-                            # Exibe o erro real na tela para a gente ler
+                            texto_resposta = f"✅ Sucesso: {resposta.text}"
+                        except Exception as e:
+                            # Captura o erro real aqui
                             st.error(f"❌ DEBUG DO ERRO: {type(e).__name__} - {str(e)}")
-                    
+                            texto_resposta = "Falha na comunicação."
+
                     st.markdown(texto_resposta)
             
             st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
