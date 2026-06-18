@@ -423,50 +423,43 @@ def main() -> None:
                     with st.status("Processando due diligence...", expanded=True) as status:
                         api_key = st.secrets.get("GEMINI_API_KEY")
                         if not api_key:
-                            st.error("❌ A chave GEMINI_API_KEY não foi carregada no Streamlit Secrets.")
+                            st.error("❌ Chave API não configurada.")
+                            texto_resposta = "Erro de configuração."
                         else:
                             try:
                                 client = genai.Client(api_key=api_key)
-                                # Tenta um modelo mais "garantido" que sempre funciona
-                                model_name = 'gemini-1.5-flash' 
+                                # Usando o 1.5-flash como garantia de compatibilidade
+                                model_name = 'gemini-1.5-flash'
                                 
-                                st.write("🔍 Conectando ao modelo...")
+                                system_instruction = (
+                                    "Você é o Copiloto de Carbono da CarbonMind. "
+                                    "REGRAS: 1. Se houver documento, entregue uma 'Tabela de Auditoria' (Item | Status | Risco). "
+                                    "2. Seja direto e executivo. 3. Identifique gaps da Lei 15.042/24."
+                                )
                                 
+                                conteudos = [texto_digitado]
+                                if arquivo_anexado:
+                                    # Reinicia o ponteiro do arquivo para leitura
+                                    arquivo_anexado.seek(0)
+                                    bytes_pdf = arquivo_anexado.read()
+                                    pdf_part = types.Part.from_bytes(data=bytes_pdf, mime_type="application/pdf")
+                                    conteudos.append(pdf_part)
+                                
+                                st.write("Consultando normas...")
                                 resposta = client.models.generate_content(
                                     model=model_name,
-                                    contents=texto_digitado,
-                                    config=types.GenerateContentConfig(temperature=0.2)
+                                    contents=conteudos,
+                                    config=types.GenerateContentConfig(
+                                        system_instruction=system_instruction, 
+                                        temperature=0.2
+                                    )
                                 )
                                 texto_resposta = resposta.text
+                                status.update(label="Análise concluída!", state="complete", expanded=False)
                             except Exception as e:
                                 st.error(f"❌ Erro na API: {str(e)}")
-                                texto_resposta = "Falha na comunicação com o servidor."
-                        if api_key:
-                            client = genai.Client(api_key=api_key)
-                            system_instruction = (
-                                "Você é o Copiloto de Carbono da CarbonMind. "
-                                "REGRAS DE CONDUTA: "
-                                "1. Ao receber documentos, entregue imediatamente uma 'Tabela de Auditoria' (Item | Status | Risco). "
-                                "2. Seja direto: sem introduções longas ou saudações desnecessárias. "
-                                "3. Adote tom executivo, técnico e consultivo. "
-                                "4. Priorize a identificação de gaps regulatórios perante a Lei 15.042/24."
-                            )
-                            conteudos = [texto_digitado]
-                            if arquivo_anexado:
-                                bytes_pdf = arquivo_anexado.read()
-                                pdf_part = types.Part.from_bytes(data=bytes_pdf, mime_type="application/pdf")
-                                conteudos.append(pdf_part)
-                            
-                            st.write("Consultando normas...")
-                            resposta = client.models.generate_content(
-                                model='gemini-2.0-flash',
-                                contents=conteudos,
-                                config=types.GenerateContentConfig(system_instruction=system_instruction, temperature=0.2)
-                            )
-                            texto_resposta = resposta.text
-                            status.update(label="Análise concluída!", state="complete", expanded=False)
-                        else:
-                            texto_resposta = "⚠️ API Key não configurada."
+                                texto_resposta = "Falha na comunicação."
+                    
                     st.markdown(texto_resposta)
             
             st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
