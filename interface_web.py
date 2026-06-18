@@ -427,36 +427,38 @@ def main() -> None:
                 with caixa_historico:
                     with st.chat_message("assistant"):
                         try:
-                            # Usando a biblioteca que você já tem instalada
-                            from google import genai
+                            # 1. Instalação dinâmica da biblioteca clássica (se não estiver presente)
+                            import subprocess
+                            import sys
+                            import importlib.util
                             
-                            client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+                            if importlib.util.find_spec("google.generativeai") is None:
+                                st.write("🔧 Configurando ambiente...")
+                                subprocess.check_call([sys.executable, "-m", "pip", "install", "google-generativeai"])
                             
-                            # Definição do modelo sem prefixos que causam erro 404
-                            modelo = 'gemini-1.5-flash'
+                            # 2. Uso da biblioteca clássica
+                            import google.generativeai as genai_old
+                            
+                            api_key = st.secrets["GEMINI_API_KEY"]
+                            genai_old.configure(api_key=api_key)
+                            
+                            # Uso do modelo que é o padrão ouro de estabilidade
+                            model = genai_old.GenerativeModel('gemini-1.5-flash')
                             
                             conteudos = [texto_digitado]
                             if arquivo_anexado:
                                 arquivo_anexado.seek(0)
-                                # Usando o tipo de upload correto para a biblioteca google-genai
-                                from google.genai import types
-                                pdf_part = types.Part.from_bytes(
-                                    data=arquivo_anexado.read(), 
-                                    mime_type="application/pdf"
-                                )
-                                conteudos.append(pdf_part)
+                                # O SDK antigo tem um método de upload muito mais estável
+                                uploaded_file = genai_old.upload_file(arquivo_anexado)
+                                conteudos.append(uploaded_file)
                             
-                            # Chamada direta
-                            resposta = client.models.generate_content(
-                                model=modelo,
-                                contents=conteudos,
-                                config={"system_instruction": "Você é o Copiloto de Carbono da CarbonMind. Seja direto e executivo."}
-                            )
+                            resposta = model.generate_content(conteudos)
                             texto_resposta = resposta.text
                             
                         except Exception as e:
-                            texto_resposta = f"❌ Erro crítico: {str(e)}"
-                        
+                            texto_resposta = f"❌ Erro Crítico: {str(e)}"
+                            st.error(f"Detalhes técnicos: {repr(e)}")
+
                         st.markdown(texto_resposta)
                         st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
                         st.rerun()
