@@ -222,6 +222,41 @@ def aplicar_estilo() -> None:
     st.markdown(
         """
         <style>
+
+        /* Força a sidebar para a direita e remove o padding padrão */
+            [data-testid="stSidebar"] {
+                right: 0;
+                left: auto;
+                padding: 0 !important;
+            }
+            
+            /* Remove o espaço morto no topo da sidebar */
+            [data-testid="stSidebarUserContent"] {
+                padding-top: 0.5rem !important;
+            }
+            
+            /* Remove a margem externa do bloco que contém o título */
+            [data-testid="stSidebar"] > div:first-child {
+                padding-top: 0.5rem !important;
+                margin-top: -1rem !important; 
+            }
+
+            /* Compacta o título e subtítulo */
+            [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+                margin-top: 0 !important;
+                margin-bottom: 0.2rem !important;
+            }
+
+            /* Compacta o Chat */
+            [data-testid="stChatMessage"] { 
+                padding: 0.3rem !important; 
+                margin-bottom: 0.1rem !important;
+            }
+            
+            /* Ajuste final para o container do chat */
+            div[data-testid="stVerticalBlock"] {
+                gap: 0.2rem !important;
+            }
             /* 1. Força a barra lateral para a direita e o conteúdo para a esquerda */
             [data-testid="stAppViewContainer"] {
                 flex-direction: row-reverse !important;
