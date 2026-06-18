@@ -222,33 +222,29 @@ def aplicar_estilo() -> None:
     st.markdown(
         """
         <style>
-            /* 1. Mover Sidebar para a direita */
-            [data-testid="stSidebar"] {
-                right: 0;
-                left: auto;
+            /* 1. Força a barra lateral para a direita e o conteúdo para a esquerda */
+            [data-testid="stAppViewContainer"] {
+                flex-direction: row-reverse !important;
             }
             
-            /* 2. Compactar o conteúdo da Sidebar (IA) */
+            /* 2. Remove espaços vazios no topo da sidebar */
             [data-testid="stSidebar"] {
-                padding-top: 0.5rem !important;
+                padding-top: 0rem !important;
             }
+            
+            /* 3. Compacta o conteúdo interno da IA */
             [data-testid="stSidebar"] > div:first-child {
                 padding-top: 0.5rem !important; 
                 gap: 0.2rem !important;
             }
             
-            /* 3. Ajustar bolhas do Chat */
+            /* 4. Chat mais compacto */
             [data-testid="stChatMessage"] { 
-                padding: 0.4rem 0.6rem !important; 
-                font-size: 0.9rem !important; 
-                margin-bottom: 0.2rem !important;
+                padding: 0.2rem 0.4rem !important; 
+                font-size: 0.85rem !important; 
+                margin-bottom: 0.1rem !important;
             }
-
-            /* 4. Altura do histórico */
-            div[data-testid="stVerticalBlock"] > div > div[height="350"] {
-                height: 250px !important;
-            }
-
+            
             /* 5. Ajustes do conteúdo principal */
             .main-header { padding: 1.0rem !important; margin-bottom: 0.5rem !important; }
             .stVerticalBlock[style*="border"] { padding: 1.0rem !important; margin-bottom: 0.5rem !important; }
