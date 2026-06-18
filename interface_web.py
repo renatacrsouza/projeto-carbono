@@ -422,6 +422,25 @@ def main() -> None:
                 with st.chat_message("assistant"):
                     with st.status("Processando due diligence...", expanded=True) as status:
                         api_key = st.secrets.get("GEMINI_API_KEY")
+                        if not api_key:
+                            st.error("❌ A chave GEMINI_API_KEY não foi carregada no Streamlit Secrets.")
+                        else:
+                            try:
+                                client = genai.Client(api_key=api_key)
+                                # Tenta um modelo mais "garantido" que sempre funciona
+                                model_name = 'gemini-1.5-flash' 
+                                
+                                st.write("🔍 Conectando ao modelo...")
+                                
+                                resposta = client.models.generate_content(
+                                    model=model_name,
+                                    contents=texto_digitado,
+                                    config=types.GenerateContentConfig(temperature=0.2)
+                                )
+                                texto_resposta = resposta.text
+                            except Exception as e:
+                                st.error(f"❌ Erro na API: {str(e)}")
+                                texto_resposta = "Falha na comunicação com o servidor."
                         if api_key:
                             client = genai.Client(api_key=api_key)
                             system_instruction = (
