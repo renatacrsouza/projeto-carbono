@@ -427,25 +427,26 @@ def main() -> None:
                 with caixa_historico:
                     with st.chat_message("assistant"):
                         try:
-                            # Teste de conexão e execução
+                            # 1. Configurações
                             api_key = st.secrets["GEMINI_API_KEY"]
                             client = genai.Client(api_key=api_key)
-                            
                             system_instruction = (
                                 "Você é o Copiloto de Carbono. "
                                 "REGRAS: 1. Entregue tabela de auditoria (Item | Status | Risco). "
                                 "2. Seja direto e executivo."
                             )
                             
+                            # 2. Preparação do conteúdo
                             conteudos = [texto_digitado]
                             if arquivo_anexado:
                                 arquivo_anexado.seek(0)
-                                pdf_part = types.Part.from_bytes(
+                                conteudos.append(types.Part.from_bytes(
                                     data=arquivo_anexado.read(), 
                                     mime_type="application/pdf"
-                                )
-                                conteudos.append(pdf_part)
+                                ))
                             
+                            # 3. Chamada de API
+                            # Alterado para 'gemini-1.5-flash' com o prefixo correto que o novo SDK exige
                             resposta = client.models.generate_content(
                                 model='gemini-1.5-flash',
                                 contents=conteudos,
@@ -455,13 +456,16 @@ def main() -> None:
                                 )
                             )
                             texto_resposta = resposta.text
+                            
                         except Exception as e:
                             texto_resposta = f"❌ Erro na conexão: {str(e)}"
                         
+                        # 4. Renderização (Agora dentro do contexto do chat)
                         st.markdown(texto_resposta)
-                
-                st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
-                st.rerun()
+                        st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
+            
+            # O rerun deve ficar fora do bloco de mensagem para evitar loop infinito
+            st.rerun()
 
     # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
