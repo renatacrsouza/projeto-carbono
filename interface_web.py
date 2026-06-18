@@ -419,36 +419,36 @@ def main() -> None:
                     st.info("Nenhum doc. anexado.")
 
             if texto_digitado:
-            with caixa_historico:
-                with st.chat_message("user"):
-                    st.write(texto_digitado)
-            st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
+                with caixa_historico:
+                    with st.chat_message("user"):
+                        st.write(texto_digitado)
+                st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
 
-            with caixa_historico:
-                with st.chat_message("assistant"):
-                    # Teste direto e simplificado
-                    api_key = st.secrets.get("GEMINI_API_KEY")
-                    if not api_key:
-                        st.error("❌ Erro: Chave não encontrada no Secrets.")
-                        texto_resposta = "Erro de configuração."
-                    else:
-                        try:
-                            client = genai.Client(api_key=api_key)
-                            # Teste ultra-simplificado
-                            resposta = client.models.generate_content(
-                                model='gemini-1.5-flash',
-                                contents="Diga apenas 'Conectado'."
-                            )
-                            texto_resposta = f"✅ Sucesso: {resposta.text}"
-                        except Exception as e:
-                            # Captura o erro real aqui
-                            st.error(f"❌ DEBUG DO ERRO: {type(e).__name__} - {str(e)}")
-                            texto_resposta = "Falha na comunicação."
+                with caixa_historico:
+                    with st.chat_message("assistant"):
+                        # Teste direto e simplificado
+                        api_key = st.secrets.get("GEMINI_API_KEY")
+                        if not api_key:
+                            st.error("❌ Erro: Chave não encontrada no Secrets.")
+                            texto_resposta = "Erro de configuração."
+                        else:
+                            try:
+                                client = genai.Client(api_key=api_key)
+                                # Teste ultra-simplificado
+                                resposta = client.models.generate_content(
+                                    model='gemini-1.5-flash',
+                                    contents="Diga apenas 'Conectado'."
+                                )
+                                texto_resposta = f"✅ Sucesso: {resposta.text}"
+                            except Exception as e:
+                                # Captura o erro real aqui
+                                st.error(f"❌ DEBUG DO ERRO: {type(e).__name__} - {str(e)}")
+                                texto_resposta = "Falha na comunicação."
 
-                    st.markdown(texto_resposta)
-            
-            st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
-            st.rerun()
+                        st.markdown(texto_resposta)
+                
+                st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
+                st.rerun()
 
     # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
