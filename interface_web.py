@@ -222,36 +222,34 @@ def aplicar_estilo() -> None:
     st.markdown(
         """
         <style>
-            /* --- AJUSTES DA SIDEBAR (Lado Direito) --- */
+            /* 1. Mover Sidebar para a direita */
             [data-testid="stSidebar"] {
-                padding-top: 1rem !important; /* Remove o espaço vazio no topo da sidebar */
-                background-color: #F8F9FA;
+                right: 0;
+                left: auto;
             }
             
-            /* Diminuir o espaço entre os elementos do Chat e Upload */
+            /* 2. Compactar o conteúdo da Sidebar (IA) */
+            [data-testid="stSidebar"] {
+                padding-top: 0.5rem !important;
+            }
             [data-testid="stSidebar"] > div:first-child {
                 padding-top: 0.5rem !important; 
                 gap: 0.2rem !important;
             }
             
-            /* Diminuir o tamanho das bolhas do Chat */
+            /* 3. Ajustar bolhas do Chat */
             [data-testid="stChatMessage"] { 
                 padding: 0.4rem 0.6rem !important; 
                 font-size: 0.9rem !important; 
                 margin-bottom: 0.2rem !important;
             }
 
-            /* Compactar a área de histórico de chat */
+            /* 4. Altura do histórico */
             div[data-testid="stVerticalBlock"] > div > div[height="350"] {
-                height: 250px !important; /* Reduzi a altura para não ocupar tanto espaço */
+                height: 250px !important;
             }
 
-            /* Compactar o uploader de arquivos */
-            [data-testid="stFileUploader"] {
-                padding: 0.5rem !important;
-            }
-
-            /* --- AJUSTES DO CONTEÚDO PRINCIPAL (Lado Esquerdo) --- */
+            /* 5. Ajustes do conteúdo principal */
             .main-header { padding: 1.0rem !important; margin-bottom: 0.5rem !important; }
             .stVerticalBlock[style*="border"] { padding: 1.0rem !important; margin-bottom: 0.5rem !important; }
         </style>
