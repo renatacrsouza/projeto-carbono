@@ -468,21 +468,24 @@ def main() -> None:
     with c_btn:
         st.download_button(label="⬇️ Baixar Template de Suporte (PDF)", data=template_pdf, file_name="template_suporte_carbono.pdf", mime="application/pdf", use_container_width=True)
     with c_radio:
-        # Dicionário com os nomes e as descrições técnicas
-        opcoes = {
-            "🚀 Estruturar Projeto ": "Foco em projetos do zero, definição de baseline, adicionalidade e viabilidade técnica.",
-            "🔎 Validar Ativo ": "Pré-auditoria em projetos existentes, análise de conformidade de documentos e riscos."
+        # Dicionário: Chave (o que você quer mostrar) -> Valor (o que o código precisa)
+        mapeamento = {
+            "🚀 Estruturação": "✨ Estruturar do zero (Frente 1 — Estruturação)",
+            "🔎 Pré-Auditoria": "🔍 Validar ativo existente (Frente 2 — Pré-Auditoria)"
         }
+
+        # O radio mostra o nome limpo
+        selecao_usuario = st.radio("Jornada do Projeto:", list(mapeamento.keys()), index=0, horizontal=True)
         
-        jornada = st.radio(
-            "Jornada do Projeto:", 
-            list(opcoes.keys()), 
-            index=0, 
-            horizontal=True
-        )
+        # A mágica: o código recebe o nome "feio" (com Frente 1 e 2), mas você não vê
+        jornada = mapeamento[selecao_usuario]
         
-        # Mostra a descrição técnica de forma sutil logo abaixo
-        st.caption(f"*{opcoes[jornada]}*")
+        # Descrição limpa abaixo
+        descricoes = {
+            "🚀 Estruturação": "*Foco em projetos do zero: baseline, adicionalidade e viabilidade técnica.*",
+            "🔎 Pré-Auditoria": "*Revisão de ativos existentes: conformidade documental e análise de riscos.*"
+        }
+        st.caption(descricoes[selecao_usuario])
     st.divider()
 
     if "relatorio_gerado" not in st.session_state:
