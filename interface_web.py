@@ -425,9 +425,12 @@ def main() -> None:
                         if api_key:
                             client = genai.Client(api_key=api_key)
                             system_instruction = (
-                                "Você é o Copiloto de Carbono. "
-                                "REGRAS: 1. Analise documentos e crie uma 'Tabela de Verificação' (Itens: Item, Status, Risco). "
-                                "2. Máximo de 2 parágrafos. 3. Linguagem executiva."
+                                "Você é o Copiloto de Carbono da CarbonMind. "
+                                "REGRAS DE CONDUTA: "
+                                "1. Ao receber documentos, entregue imediatamente uma 'Tabela de Auditoria' (Item | Status | Risco). "
+                                "2. Seja direto: sem introduções longas ou saudações desnecessárias. "
+                                "3. Adote tom executivo, técnico e consultivo. "
+                                "4. Priorize a identificação de gaps regulatórios perante a Lei 15.042/24."
                             )
                             conteudos = [texto_digitado]
                             if arquivo_anexado:
