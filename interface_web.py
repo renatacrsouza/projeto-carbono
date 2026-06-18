@@ -393,6 +393,20 @@ def main() -> None:
     st.set_page_config(page_title="Carbon Diagnosis", page_icon="🌱", layout="wide", initial_sidebar_state="expanded")
     aplicar_estilo()
 
+    # --- NOVO CABEÇALHO ---
+    col_logo, col_titulo = st.columns([1, 10])
+    with col_logo:
+        # Se você tiver a imagem "logo.png", use a linha abaixo:
+        st.image("logo.png", width=60) 
+        # Se quiser usar um emoji no lugar da imagem, use: st.write("🌱")
+    with col_titulo:
+        st.markdown("### CarbonMind") # O nome da sua empresa
+    
+    st.divider() # Adiciona uma linha horizontal para separar do resto
+    # --- FIM DO CABEÇALHO ---
+
+    # (A partir daqui começa o restante do seu código original...)
+
     if "respostas_acumuladas" not in st.session_state:
         st.session_state.respostas_acumuladas = {}
 
@@ -403,7 +417,7 @@ def main() -> None:
 
     # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (ESTILO GEMINI PREMIUM)
     with st.sidebar:
-        st.image("logo.png", width=100)
+        #st.image("logo.png", width=100)
         st.header("🌱 Copiloto de Carbono")
         st.caption("Tire suas dúvidas sobre as perguntas ou envie documentos para análise em tempo real.")
         st.markdown("---")
