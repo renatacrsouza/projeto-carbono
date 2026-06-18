@@ -222,42 +222,41 @@ def aplicar_estilo() -> None:
     st.markdown(
         """
         <style>
-            /* 1. Inverte o lado: IA na direita */
+            /* 1. Força a barra para a direita e conteúdo para a esquerda */
             [data-testid="stAppViewContainer"] {
                 flex-direction: row-reverse !important;
             }
             
-            /* 2. Barra Lateral (IA) */
+            /* 2. Largura fixa e garantida para a IA */
             [data-testid="stSidebar"] {
                 right: 0 !important;
                 left: auto !important;
-                min-width: 350px !important; 
-                max-width: 400px !important;
-                padding: 0.5rem !important;
+                min-width: 350px !important;
+                max-width: 350px !important;
                 background-color: #F8F9FA !important;
-            }
-
-            /* 3. CONTEÚDO PRINCIPAL: Garante que o texto ocupe o espaço restante */
-            [data-testid="stMainBlockContainer"] {
-                max-width: 100% !important; /* Libera a largura */
-                padding-left: 2rem !important;
-                padding-right: 2rem !important;
-            }
-
-            /* 4. Chat Compacto */
-            [data-testid="stChatMessage"] { 
-                padding: 0.3rem 0.5rem !important; 
-                font-size: 0.85rem !important; 
+                padding: 0 !important;
             }
             
-            /* 5. Ajustes dos Cards de Perguntas */
-            .main-header { padding: 1.0rem !important; margin-bottom: 0.5rem !important; }
-            .stVerticalBlock[style*="border"] { padding: 1.0rem !important; margin-bottom: 0.5rem !important; }
+            /* 3. Remove o espaço vazio no topo da sidebar que você marcou */
+            [data-testid="stSidebarContent"] {
+                padding-top: 0 !important;
+                margin-top: 0 !important;
+            }
+
+            /* 4. Remove o espaço abaixo do título da IA */
+            [data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
+                gap: 0.1rem !important;
+                padding-top: 0 !important;
+            }
+
+            /* 5. Garante que o formulário principal ocupe o resto da tela */
+            section[data-testid="stMain"] {
+                width: calc(100% - 350px) !important;
+            }
         </style>
         """,
         unsafe_allow_html=True,
     )
-
 def extrair_numero_pergunta(chave: str) -> str:
     return chave.split(".")[0].strip()
 
