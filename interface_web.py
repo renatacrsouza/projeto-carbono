@@ -419,30 +419,32 @@ def main() -> None:
             with caixa_historico:
                 with st.chat_message("assistant"):
                     with st.spinner("Analisando e gerando resposta..."):
-                        try:
+                    
                             api_key = st.secrets.get("GEMINI_API_KEY")
                             if api_key:
                                 client = genai.Client(api_key=api_key)
-                                contexto_prompt = (
-                                    "Você é o Copiloto de Carbono, um especialista sênior em Due Diligence e estruturação de projetos de crédito de carbono no Brasil. "
-                                    "Sua missão é analisar as dúvidas do usuário e os documentos anexados (como CAR, Matrículas ou Inventários) com base rigorosa nas seguintes referências:\n"
-                                    "1. GHG Protocol: Classifique e oriente sobre limites organizacionais e escopos de emissão (Escopos 1, 2 e 3).\n"
-                                    "2. Diretrizes AFOLU: Avalie critérios de elegibilidade do solo, histórico de desmatamento/reflorestamento (ARR/REDD+) e o risco de Vazamento (Leakage).\n"
-                                    "3. Adicionalidade (MDL): Avalie se a atividade proposta demonstra barreira financeira, tecnológica ou regulatória, comprovando que o projeto não ocorreria sem o incentivo dos créditos.\n"
-                                    "4. Manual de Verificadores: Seja criterioso com a consistência de dados. Exija perímetros digitais claros (arquivos KML/SHP) e consistência entre CAR e Matrícula.\n"
-                                    "5. Regulamentação SBCE: Oriente sobre o enquadramento no Sistema Brasileiro de Comércio de Emissões para quem emite acima de 25.000 tCO2e/ano.\n\n"
-                                    "Responda de forma altamente profissional, porém clara, direta e executiva. Se houver um PDF anexado, use seus dados para fundamentar tecnicamente o diagnóstico.\n"
-                                    f"Dúvida do usuário: {texto_digitado}"
-                                )
-                                conteudos_enviar = [contexto_prompt]
+                                system_instruction = (
+                                    "Você é o Copiloto de Carbono, especialista em Due Diligence e Carbono. "
+                                    "REGRAS: Seja direta e técnica. Máximo 3 parágrafos. Sem introduções. "
+                                    "Foque em normas (GHG Protocol, AFOLU, Adicionalidade). "
+                                    )
+    
+                                conteudos_enviar = [texto_digitado]
                                 if arquivo_anexado:
                                     bytes_pdf = arquivo_anexado.read()
                                     pdf_part = types.Part.from_bytes(data=bytes_pdf, mime_type="application/pdf")
                                     conteudos_enviar.append(pdf_part)
-                                
+    
                                 for tentativa in range(3):
                                     try:
-                                        resposta = client.models.generate_content(model='gemini-2.5-flash', contents=conteudos_enviar)
+                                        resposta = client.models.generate_content(
+                                            model='gemini-2.5-flash',
+                                            contents=conteudos_enviar,
+                                            config=types.GenerateContentConfig(
+                                            system_instruction=system_instruction,
+                                            temperature=0.2
+                                            )
+                                    )
                                         texto_resposta = resposta.text
                                         break
                                     except Exception as e_chat:
@@ -450,14 +452,8 @@ def main() -> None:
                                             time.sleep(2)
                                             continue
                                         raise e_chat
-                            else:
-                                texto_resposta = "⚠️ Chave 'GEMINI_API_KEY' não encontrada nos Secrets do Streamlit."
-                        except Exception as e:
-                            print(f"Erro detalhado da API do Gemini: {e}")
-                            texto_resposta = f"Não consegui conectar ao cérebro da IA. Detalhe técnico: {str(e)}"
-                        
-                        st.write(texto_resposta)
-            
+                    
+            st.markdown(texto_resposta)
             st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
             st.rerun()
 
