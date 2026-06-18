@@ -222,18 +222,59 @@ def aplicar_estilo() -> None:
     st.markdown(
         """
         <style>
+            /* --- Compactando o visual global --- */
+            [data-testid="stAppViewContainer"] {
+                background-color: #F8F9FA;
+            }
+            
+            /* Compactando o cabeçalho principal (Título) */
             .main-header { 
                 background: #FFFFFF; 
-                padding: 1.0rem 1.5rem !important; 
-                border-radius: 16px; 
-                margin-bottom: 1.0rem !important; 
+                padding: 1.0rem 1.8rem !important; /* Estava 1.8; Reduzi padding vertical */
+                border-radius: 20px; 
+                margin-bottom: 1.0rem !important; /* Estava 1.5; Gruda mais na linha de baixo */
+                border: 1px solid #E9ECEF;
             }
+            .main-header h1 { font-size: 2.0rem !important; margin: 0 !important; }
+            .main-header p { font-size: 1.0rem !important; color: #86868B; margin-top: 0.3rem !important; }
+
+            /* Compactando os Cards das Perguntas/Conteúdo */
             .stVerticalBlock[style*="border"] {
-                padding: 1.0rem !important; 
-                margin-bottom: 0.8rem !important; 
+                padding: 1.2rem !important; /* Estava 1.8; Reduzi drasticamente o padding interno */
+                margin-bottom: 0.6rem !important; /* Estava 1.2; Aproxima as caixas brancas */
+                border-radius: 16px !important;
+                background-color: #FFFFFF !important;
+                border: 1px solid #E9ECEF !important;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.01) !important;
             }
-            h5 { margin-top: 0 !important; margin-bottom: 0.5rem !important; }
-            .stProgress { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
+
+            /* --- Compactando o visual interno das perguntas --- */
+            h5 { 
+                margin-top: 0 !important; /* Cola o título no Item */ 
+                margin-bottom: 0.5rem !important; /* Aproxima do input */ 
+            }
+            div[data-testid="stWidgetLabel"] { 
+                margin-bottom: 0.3rem !important; /* Cola o label no input */ 
+            }
+            .stRadio > div { 
+                gap: 0.4rem !important; /* Aproxima as opções do radio button */ 
+            }
+
+            /* --- Compactando a Sidebar (IA/Chat) --- */
+            [data-testid="stSidebarCollapseButton"] { color: #FFFFFF !important; }
+            [data-testid="stSidebar"] {
+                background-color: #F1F3F5;
+            }
+            /* Compactando as bolhas do chat na imagem image_1.png */
+            [data-testid="stChatMessage"] { 
+                padding: 0.6rem 0.8rem !important; /* Bolhas menores */ 
+                margin-bottom: 0.3rem !important; /* Aproxima as bolhas */ 
+            }
+            
+            /* --- Outros ajustes compactos --- */
+            .pergunta-num { margin-bottom: 0.3rem !important; }
+            stProgress { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
+            stDivider { margin: 1.0rem 0 !important; }
         </style>
         """,
         unsafe_allow_html=True,
