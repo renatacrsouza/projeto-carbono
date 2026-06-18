@@ -470,8 +470,8 @@ def main() -> None:
     with c_radio:
         # Dicionário com os nomes e as descrições técnicas
         opcoes = {
-            "🚀 Estruturar Projeto (Frente 1)": "Foco em projetos do zero, definição de baseline, adicionalidade e viabilidade técnica.",
-            "🔎 Validar Ativo (Frente 2)": "Pré-auditoria em projetos existentes, análise de conformidade de documentos e riscos."
+            "🚀 Estruturar Projeto ": "Foco em projetos do zero, definição de baseline, adicionalidade e viabilidade técnica.",
+            "🔎 Validar Ativo ": "Pré-auditoria em projetos existentes, análise de conformidade de documentos e riscos."
         }
         
         jornada = st.radio(
@@ -482,7 +482,7 @@ def main() -> None:
         )
         
         # Mostra a descrição técnica de forma sutil logo abaixo
-        st.caption(f"**Contexto:** {opcoes[jornada]}")
+        st.caption(f"*{opcoes[jornada]}*")
     st.divider()
 
     if "relatorio_gerado" not in st.session_state:
