@@ -222,7 +222,7 @@ def aplicar_estilo() -> None:
     st.markdown(
         """
         <style>
-            /* 1. Estrutura: IA na direita, conteúdo na esquerda */
+            /* 1. Inverte o lado: IA na direita */
             [data-testid="stAppViewContainer"] {
                 flex-direction: row-reverse !important;
             }
@@ -237,20 +237,20 @@ def aplicar_estilo() -> None:
                 background-color: #F8F9FA !important;
             }
 
-            /* 3. Compactar elementos da IA */
-            [data-testid="stSidebarContent"] {
-                padding-top: 0rem !important;
-                gap: 0.2rem !important;
+            /* 3. CONTEÚDO PRINCIPAL: Garante que o texto ocupe o espaço restante */
+            [data-testid="stMainBlockContainer"] {
+                max-width: 100% !important; /* Libera a largura */
+                padding-left: 2rem !important;
+                padding-right: 2rem !important;
             }
 
             /* 4. Chat Compacto */
             [data-testid="stChatMessage"] { 
                 padding: 0.3rem 0.5rem !important; 
                 font-size: 0.85rem !important; 
-                margin-bottom: 0.2rem !important;
             }
             
-            /* 5. Ajustes do Conteúdo Principal */
+            /* 5. Ajustes dos Cards de Perguntas */
             .main-header { padding: 1.0rem !important; margin-bottom: 0.5rem !important; }
             .stVerticalBlock[style*="border"] { padding: 1.0rem !important; margin-bottom: 0.5rem !important; }
         </style>
