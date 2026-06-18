@@ -423,14 +423,17 @@ def main() -> None:
                     with st.status("Processando due diligence...", expanded=True) as status:
                         api_key = st.secrets.get("GEMINI_API_KEY")
                         if not api_key:
-                            st.error("❌ Chave API não configurada.")
-                            texto_resposta = "Erro de configuração."
+                            st.error("❌ Erro: Chave não encontrada no Secrets.")
                         else:
                             try:
                                 client = genai.Client(api_key=api_key)
                                 # Usando o 1.5-flash como garantia de compatibilidade
                                 model_name = 'gemini-1.5-flash'
-                                
+                                resposta = client.models.generate_content(
+                                model='gemini-1.5-flash',
+                                contents="Diga apenas 'Conectado'."
+                            )
+                            st.success(f"✅ Sucesso: {resposta.text}")
                                 system_instruction = (
                                     "Você é o Copiloto de Carbono da CarbonMind. "
                                     "REGRAS: 1. Se houver documento, entregue uma 'Tabela de Auditoria' (Item | Status | Risco). "
@@ -457,8 +460,8 @@ def main() -> None:
                                 texto_resposta = resposta.text
                                 status.update(label="Análise concluída!", state="complete", expanded=False)
                             except Exception as e:
-                                st.error(f"❌ Erro na API: {str(e)}")
-                                texto_resposta = "Falha na comunicação."
+                            # Exibe o erro real na tela para a gente ler
+                            st.error(f"❌ DEBUG DO ERRO: {type(e).__name__} - {str(e)}")
                     
                     st.markdown(texto_resposta)
             
