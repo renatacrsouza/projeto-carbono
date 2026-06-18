@@ -428,6 +428,9 @@ def main() -> None:
                     with st.chat_message("assistant"):
                         try:
                             import google.generativeai as genai_old
+                            # Forçar uso da biblioteca nova que você já tem instalada
+                            from google import genai
+                            from google.genai import types
                             
                             # Configuração com a biblioteca antiga (mais robusta para chaves padrão)
                             api_key = st.secrets["GEMINI_API_KEY"]
