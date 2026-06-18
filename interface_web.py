@@ -222,27 +222,33 @@ def aplicar_estilo() -> None:
     st.markdown(
         """
         <style>
-            /* 1. Fixar a largura da Sidebar (IA) */
+            /* 1. Layout Base: Inverte tudo para a IA ficar na direita */
+            [data-testid="stAppViewContainer"] {
+                flex-direction: row-reverse !important;
+            }
+
+            /* 2. Barra Lateral (IA) na Direita */
             [data-testid="stSidebar"] {
                 width: 300px !important;
                 min-width: 300px !important;
+                right: 0 !important;
+                left: auto !important;
                 background-color: #F8F9FA !important;
+                padding: 0.5rem !important;
+            }
+
+            /* 3. Conteúdo Principal: Ocupa todo o resto da tela à esquerda */
+            [data-testid="stMainBlockContainer"] {
+                max-width: 100% !important;
+                padding-left: 2rem !important;
+                padding-right: 2rem !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
             }
             
-            /* 2. Ajustar o conteúdo para respeitar os 300px da IA */
-            [data-testid="stAppViewContainer"] > section {
-                margin-left: 300px !important;
-            }
-            
-            /* 3. Compactar elementos da IA */
-            [data-testid="stSidebarContent"] {
-                padding: 1rem !important;
-                gap: 0.5rem !important;
-            }
-            
-            /* 4. Chat compacto */
-            [data-testid="stChatMessage"] {
-                padding: 0.3rem !important;
+            /* 4. Chat Compacto */
+            [data-testid="stChatMessage"] { 
+                padding: 0.3rem !important; 
                 font-size: 0.85rem !important;
             }
         </style>
