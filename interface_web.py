@@ -427,34 +427,36 @@ def main() -> None:
                 with caixa_historico:
                     with st.chat_message("assistant"):
                         try:
-                            import google.generativeai as genai_old
-                            # Forçar uso da biblioteca nova que você já tem instalada
+                            # Usando a biblioteca que você já tem instalada
                             from google import genai
-                            from google.genai import types
                             
-                            # Configuração com a biblioteca antiga (mais robusta para chaves padrão)
-                            api_key = st.secrets["GEMINI_API_KEY"]
-                            genai_old.configure(api_key=api_key)
+                            client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
                             
-                            model = genai_old.GenerativeModel('gemini-1.5-flash')
+                            # Definição do modelo sem prefixos que causam erro 404
+                            modelo = 'gemini-1.5-flash'
                             
-                            # Prepara o conteúdo
                             conteudos = [texto_digitado]
                             if arquivo_anexado:
                                 arquivo_anexado.seek(0)
-                                # O SDK antigo precisa de um formato de upload específico
-                                uploaded_file = genai_old.upload_file(arquivo_anexado)
-                                conteudos.append(uploaded_file)
+                                # Usando o tipo de upload correto para a biblioteca google-genai
+                                from google.genai import types
+                                pdf_part = types.Part.from_bytes(
+                                    data=arquivo_anexado.read(), 
+                                    mime_type="application/pdf"
+                                )
+                                conteudos.append(pdf_part)
                             
-                            st.write("🔍 Consultando normas...")
-                            resposta = model.generate_content(conteudos)
+                            # Chamada direta
+                            resposta = client.models.generate_content(
+                                model=modelo,
+                                contents=conteudos,
+                                config={"system_instruction": "Você é o Copiloto de Carbono da CarbonMind. Seja direto e executivo."}
+                            )
                             texto_resposta = resposta.text
                             
                         except Exception as e:
-                            texto_resposta = f"❌ Erro de Conexão: {str(e)}"
-                            # Adicionamos um detalhe extra para diagnóstico
-                            st.error(f"Detalhes técnicos: {repr(e)}")
-
+                            texto_resposta = f"❌ Erro crítico: {str(e)}"
+                        
                         st.markdown(texto_resposta)
                         st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
                         st.rerun()
