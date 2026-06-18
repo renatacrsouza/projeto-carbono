@@ -222,76 +222,28 @@ def aplicar_estilo() -> None:
     st.markdown(
         """
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&display=swap');
-            
-            html, body, [class*="css"] { 
-                font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-                color: #1D1D1F;
-                background-color: #F5F5F7;
-            }
-            
+            /* Diminuindo espaços globais */
             .main-header { 
                 background: #FFFFFF; 
-                padding: 1.8rem 2.2rem; 
-                border-radius: 24px; 
-                text-align: left; 
-                margin-bottom: 1.5rem; 
-                border: 1px solid #E5E5EA;
-                box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01);
+                padding: 1.0rem 1.5rem !important; /* Diminuído de 1.8 para 1.0 */
+                border-radius: 16px; 
+                margin-bottom: 1.0rem !important; /* Diminuído de 1.5 para 1.0 */
             }
-            .main-header h1 { font-size: 2.2rem; font-weight: 700; margin: 0; color: #1D1D1F !important; }
-            .main-header p { font-size: 1.1rem; color: #86868B; margin-top: 0.4rem; }
             
+            /* Compactando os cards de perguntas */
             .stVerticalBlock[style*="border"] {
-                border-radius: 20px !important;
-                background-color: #FFFFFF !important;
-                border: 1px solid #E5E5EA !important;
-                padding: 1.8rem !important;
-                margin-bottom: 1.2rem !important;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.02) !important;
+                padding: 1.0rem !important; /* Diminuído de 1.8 para 1.0 */
+                margin-bottom: 0.8rem !important; /* Diminuído de 1.2 para 0.8 */
             }
-            
-            .pergunta-num { 
-                display: inline-block !important; 
-                background-color: #EBF5EE !important; 
-                color: #1B4332 !important; 
-                font-weight: 700 !important; 
-                font-size: 0.75rem !important; 
-                letter-spacing: 0.06em !important;
-                padding: 0.3rem 0.8rem !important; 
-                border-radius: 8px !important; 
-                margin-bottom: 0.5rem !important;
-                border: 1px solid #D2E7D6 !important;
-            }
-            
-            h5 {
-                font-weight: 700 !important;
-                color: #1D1D1F !important;
-                font-size: 1.1rem !important;
-                margin-top: 0.2rem !important;
-                margin-bottom: 1rem !important;
-            }
-            
-            div[data-testid="stWidgetLabel"] {
-                margin-bottom: 0.5rem !important;
-            }
-            
-            .relatorio-header { background: #1B4332; color: white; padding: 2.5rem; border-radius: 24px; text-align: center; margin-top: 3rem; }
-            .relatorio-header h2 { color: white !important; margin: 0; font-size: 1.8rem; font-weight: 700; }
-            .metric-card { background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 20px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.01); }
-            .passo-item { background: #F5F5F7; border-left: 5px solid #1B4332; padding: 1rem; border-radius: 0 16px 16px 0; margin: 0.6rem 0; font-size: 1rem; }
-            
-            [data-testid="stSidebar"] { left: auto !important; right: 0 !important; transform: translate3d(0px, 0px, 0px) !important; }
-            [data-testid="stAppViewContainer"] { flex-direction: row-reverse !important; }
-            [data-testid="stSidebarCollapseButton"] { left: auto !important; right: 10px !important; }
 
-            [data-testid="stSidebarUserContent"] { padding-top: 1.5rem !important; padding-bottom: 1rem !important; gap: 0.4rem !important; }
-            [data-testid="stSidebar"] hr { margin: 0.6rem 0 !important; }
-            [data-testid="stSidebar"] [data-testid="stChatMessage"] { padding: 0.6rem 0.8rem !important; margin-bottom: 0.4rem !important; }
+            /* Diminuindo o espaço entre os elementos de texto */
+            h5 { margin-top: 0 !important; margin-bottom: 0.5rem !important; }
+            
+            /* Ajuste para o progresso ficar menor */
+            .stProgress { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
         </style>
         """,
         unsafe_allow_html=True,
-    )
 
 
 def extrair_numero_pergunta(chave: str) -> str:
