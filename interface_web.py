@@ -410,53 +410,59 @@ def main() -> None:
         if arquivo_anexado:
             st.success("📎 Documento pronto para análise!")
 
-        if texto_digitado:
+       if texto_digitado:
             with caixa_historico:
                 with st.chat_message("user"):
                     st.write(texto_digitado)
             st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
             
+            # --- RASTREABILIDADE NA SIDEBAR ---
+            with st.sidebar:
+                st.subheader("Análise Atual")
+                if arquivo_anexado:
+                    st.success(f"📎 {arquivo_anexado.name}")
+                else:
+                    st.info("Nenhum doc. anexado.")
+
             with caixa_historico:
                 with st.chat_message("assistant"):
-                    with st.spinner("Analisando e gerando resposta..."):
+                    # --- STATUS PROFISSIONAL ---
+                    with st.status("Processando due diligence...", expanded=True) as status:
+                        api_key = st.secrets.get("GEMINI_API_KEY")
+                        if api_key:
+                            client = genai.Client(api_key=api_key)
+                            
+                            # --- SYSTEM INSTRUCTION COM TABELA DE RISCO ---
+                            system_instruction = (
+                                "Você é o Copiloto de Carbono. "
+                                "REGRAS: "
+                                "1. Analise documentos e crie uma 'Tabela de Verificação' (Colunas: Item, Status, Risco). "
+                                "2. Máximo de 2 parágrafos após a tabela. "
+                                "3. Linguagem executiva."
+                            )
+                            
+                            conteudos = [texto_digitado]
+                            if arquivo_anexado:
+                                bytes_pdf = arquivo_anexado.read()
+                                pdf_part = types.Part.from_bytes(data=bytes_pdf, mime_type="application/pdf")
+                                conteudos.append(pdf_part)
+                            
+                            st.write("Consultando normas técnicas...")
+                            resposta = client.models.generate_content(
+                                model='gemini-2.5-flash',
+                                contents=conteudos,
+                                config=types.GenerateContentConfig(
+                                    system_instruction=system_instruction,
+                                    temperature=0.2
+                                )
+                            )
+                            texto_resposta = resposta.text
+                            status.update(label="Análise concluída!", state="complete", expanded=False)
+                        else:
+                            texto_resposta = "⚠️ API Key não configurada."
                     
-                            api_key = st.secrets.get("GEMINI_API_KEY")
-                            if api_key:
-                                client = genai.Client(api_key=api_key)
-                                system_instruction = (
-                                    "Você é o Copiloto de Carbono. "
-                                    "REGRAS DE OURO: "
-                                    "1. Respostas Curtas: Máximo 2 parágrafos. "
-                                    "2. Sem introduções. Vá direto ao risco ou análise técnica."
-                                    "3. Se perguntarem conceitos, defina em uma frase e peça o documento para aplicar."
-                                    "4. Linguagem executiva, curta e objetiva."
-                                    )
-    
-                                conteudos_enviar = [texto_digitado]
-                                if arquivo_anexado:
-                                    bytes_pdf = arquivo_anexado.read()
-                                    pdf_part = types.Part.from_bytes(data=bytes_pdf, mime_type="application/pdf")
-                                    conteudos_enviar.append(pdf_part)
-    
-                                for tentativa in range(3):
-                                    try:
-                                        resposta = client.models.generate_content(
-                                            model='gemini-2.5-flash',
-                                            contents=conteudos_enviar,
-                                            config=types.GenerateContentConfig(
-                                            system_instruction=system_instruction,
-                                            temperature=0.2
-                                            )
-                                    )
-                                        texto_resposta = resposta.text
-                                        break
-                                    except Exception as e_chat:
-                                        if "503" in str(e_chat) and tentativa < 2:
-                                            time.sleep(2)
-                                            continue
-                                        raise e_chat
-                    
-            st.markdown(texto_resposta)
+                    st.markdown(texto_resposta)
+            
             st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
             st.rerun()
 
