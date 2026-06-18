@@ -222,29 +222,22 @@ def aplicar_estilo() -> None:
     st.markdown(
         """
         <style>
-            /* Diminuindo espaços globais */
             .main-header { 
                 background: #FFFFFF; 
-                padding: 1.0rem 1.5rem !important; /* Diminuído de 1.8 para 1.0 */
+                padding: 1.0rem 1.5rem !important; 
                 border-radius: 16px; 
-                margin-bottom: 1.0rem !important; /* Diminuído de 1.5 para 1.0 */
+                margin-bottom: 1.0rem !important; 
             }
-            
-            /* Compactando os cards de perguntas */
             .stVerticalBlock[style*="border"] {
-                padding: 1.0rem !important; /* Diminuído de 1.8 para 1.0 */
-                margin-bottom: 0.8rem !important; /* Diminuído de 1.2 para 0.8 */
+                padding: 1.0rem !important; 
+                margin-bottom: 0.8rem !important; 
             }
-
-            /* Diminuindo o espaço entre os elementos de texto */
             h5 { margin-top: 0 !important; margin-bottom: 0.5rem !important; }
-            
-            /* Ajuste para o progresso ficar menor */
             .stProgress { margin-top: 0.5rem !important; margin-bottom: 0.5rem !important; }
         </style>
         """,
         unsafe_allow_html=True,
-
+    )
 
 def extrair_numero_pergunta(chave: str) -> str:
     return chave.split(".")[0].strip()
