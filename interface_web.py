@@ -470,8 +470,8 @@ def main() -> None:
     with c_radio:
         # Dicionário com os nomes e as descrições técnicas
         opcoes = {
-            "🚀 Estruturação (Frente 1)": "Foco em projetos do zero: baseline, adicionalidade e viabilidade técnica.",
-            "🔎 Pré-Auditoria (Frente 2)": "Revisão de ativos existentes: conformidade documental e análise de riscos."
+            "🚀 Estruturar Projeto (Frente 1)": "Foco em projetos do zero, definição de baseline, adicionalidade e viabilidade técnica.",
+            "🔎 Validar Ativo (Frente 2)": "Pré-auditoria em projetos existentes, análise de conformidade de documentos e riscos."
         }
         
         jornada = st.radio(
