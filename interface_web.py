@@ -222,67 +222,31 @@ def aplicar_estilo() -> None:
     st.markdown(
         """
         <style>
-
-        /* Força a sidebar para a direita e remove o padding padrão */
+            /* 1. Força a barra lateral para a direita */
             [data-testid="stSidebar"] {
                 right: 0;
                 left: auto;
+                /* Expande a largura da IA */
+                min-width: 350px !important; 
+                max-width: 400px !important; 
                 padding: 0 !important;
             }
             
-            /* Remove o espaço morto no topo da sidebar */
-            [data-testid="stSidebarUserContent"] {
-                padding-top: 0.5rem !important;
-            }
-            
-            /* Remove a margem externa do bloco que contém o título */
-            [data-testid="stSidebar"] > div:first-child {
-                padding-top: 0.5rem !important;
-                margin-top: -1rem !important; 
-            }
-
-            /* Compacta o título e subtítulo */
-            [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
-                margin-top: 0 !important;
-                margin-bottom: 0.2rem !important;
-            }
-
-            /* Compacta o Chat */
-            [data-testid="stChatMessage"] { 
-                padding: 0.3rem !important; 
-                margin-bottom: 0.1rem !important;
-            }
-            
-            /* Ajuste final para o container do chat */
-            div[data-testid="stVerticalBlock"] {
-                gap: 0.2rem !important;
-            }
-            /* 1. Força a barra lateral para a direita e o conteúdo para a esquerda */
+            /* 2. Ajusta o conteúdo principal para não ser cortado */
             [data-testid="stAppViewContainer"] {
-                flex-direction: row-reverse !important;
+                margin-right: 400px !important; /* Mesma largura da sidebar */
+            }
+
+            /* 3. Compacta o topo e o chat */
+            [data-testid="stSidebarContent"] {
+                padding-top: 0.5rem !important;
+                margin-top: -1rem !important;
             }
             
-            /* 2. Remove espaços vazios no topo da sidebar */
-            [data-testid="stSidebar"] {
-                padding-top: 0rem !important;
-            }
-            
-            /* 3. Compacta o conteúdo interno da IA */
-            [data-testid="stSidebar"] > div:first-child {
-                padding-top: 0.5rem !important; 
-                gap: 0.2rem !important;
-            }
-            
-            /* 4. Chat mais compacto */
             [data-testid="stChatMessage"] { 
-                padding: 0.2rem 0.4rem !important; 
-                font-size: 0.85rem !important; 
-                margin-bottom: 0.1rem !important;
+                padding: 0.4rem 0.6rem !important; 
+                font-size: 0.9rem !important; 
             }
-            
-            /* 5. Ajustes do conteúdo principal */
-            .main-header { padding: 1.0rem !important; margin-bottom: 0.5rem !important; }
-            .stVerticalBlock[style*="border"] { padding: 1.0rem !important; margin-bottom: 0.5rem !important; }
         </style>
         """,
         unsafe_allow_html=True,
