@@ -222,41 +222,34 @@ def aplicar_estilo() -> None:
     st.markdown(
         """
         <style>
-            /* 1. Força a barra para a direita e conteúdo para a esquerda */
-            [data-testid="stAppViewContainer"] {
-                flex-direction: row-reverse !important;
-            }
-            
-            /* 2. Largura fixa e garantida para a IA */
+            /* 1. Fixar a largura da Sidebar (IA) */
             [data-testid="stSidebar"] {
-                right: 0 !important;
-                left: auto !important;
-                min-width: 350px !important;
-                max-width: 350px !important;
+                width: 300px !important;
+                min-width: 300px !important;
                 background-color: #F8F9FA !important;
-                padding: 0 !important;
             }
             
-            /* 3. Remove o espaço vazio no topo da sidebar que você marcou */
+            /* 2. Ajustar o conteúdo para respeitar os 300px da IA */
+            [data-testid="stAppViewContainer"] > section {
+                margin-left: 300px !important;
+            }
+            
+            /* 3. Compactar elementos da IA */
             [data-testid="stSidebarContent"] {
-                padding-top: 0 !important;
-                margin-top: 0 !important;
+                padding: 1rem !important;
+                gap: 0.5rem !important;
             }
-
-            /* 4. Remove o espaço abaixo do título da IA */
-            [data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-                gap: 0.1rem !important;
-                padding-top: 0 !important;
-            }
-
-            /* 5. Garante que o formulário principal ocupe o resto da tela */
-            section[data-testid="stMain"] {
-                width: calc(100% - 350px) !important;
+            
+            /* 4. Chat compacto */
+            [data-testid="stChatMessage"] {
+                padding: 0.3rem !important;
+                font-size: 0.85rem !important;
             }
         </style>
         """,
         unsafe_allow_html=True,
     )
+
 def extrair_numero_pergunta(chave: str) -> str:
     return chave.split(".")[0].strip()
 
