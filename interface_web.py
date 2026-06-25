@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Interface web premium do diagnóstico de carbono - Estilo Minimalista Apple."""
-
+ 
 import time
 from datetime import datetime
 from typing import Optional
@@ -9,7 +9,7 @@ from fpdf import FPDF
 from google import genai
 from google.genai import types
 import pandas as pd
-
+ 
 from diagnostico import (
     avaliar_maturidade,
     gerar_proximos_passos,
@@ -17,8 +17,8 @@ from diagnostico import (
     gerar_resumo_executivo,
     obter,
 )
-
-
+ 
+ 
 def gerar_template_pdf() -> bytes:
     """Gera o modelo de relatório completo em bytes."""
     pdf = FPDF()
@@ -116,8 +116,8 @@ def gerar_template_pdf() -> bytes:
     if isinstance(resultado, str):
         return resultado.encode('latin-1')
     return bytes(resultado)
-
-
+ 
+ 
 # ── Estrutura do questionário atualizada ──────────────────────────────────────
 BLOCOS = [
     {
@@ -214,10 +214,10 @@ BLOCOS = [
         "perguntas": [] 
     }
 ]
-
+ 
 CORES_MATURIDADE = {"AVANCADO": ("#1E3F20", "#EBF5EE"), "INTERMEDIARIO": ("#D97706", "#FEF3C7"), "INICIAL": ("#DC2626", "#FEE2E2")}
-
-
+ 
+ 
 def aplicar_estilo() -> None:
     st.markdown(
         """
@@ -226,7 +226,7 @@ def aplicar_estilo() -> None:
             [data-testid="stAppViewContainer"] {
                 flex-direction: row-reverse !important;
             }
-
+ 
             /* 2. Barra Lateral (IA) na Direita */
             [data-testid="stSidebar"] {
                 width: 400px !important;
@@ -236,7 +236,7 @@ def aplicar_estilo() -> None:
                 background-color: #F8F9FA !important;
                 padding: 0.5rem !important;
             }
-
+ 
             /* 3. Conteúdo Principal: Ocupa todo o resto da tela à esquerda */
             [data-testid="stMainBlockContainer"] {
                 max-width: 100% !important;
@@ -255,20 +255,20 @@ def aplicar_estilo() -> None:
         """,
         unsafe_allow_html=True,
     )
-
+ 
 def extrair_numero_pergunta(chave: str) -> str:
     return chave.split(".")[0].strip()
-
-
+ 
+ 
 def renderizar_pergunta(pergunta: dict, indice_bloco: int, indice_pergunta: int, numero_sequencial: int) -> Optional[str]:
     key_base = f"b{indice_bloco}_q{indice_pergunta}"
     valor_previo = st.session_state.respostas_acumuladas.get(pergunta["chave"], None)
-
+ 
     st.markdown(f'<span class="pergunta-num">ITEM {numero_sequencial}</span>', unsafe_allow_html=True)
     st.markdown(f"##### {pergunta['texto']}")
     if pergunta.get("ajuda"):
         st.caption(pergunta["ajuda"])
-
+ 
     if pergunta.get("multipla"):
         selecionadas = []
         lista_previa = [x.strip() for x in valor_previo.split(",")] if valor_previo else []
@@ -279,11 +279,11 @@ def renderizar_pergunta(pergunta: dict, indice_bloco: int, indice_pergunta: int,
                 if st.checkbox(opcao, value=marcado_inicial, key=f"{key_base}_{i}_{opcao.replace(' ', '_')}"):
                     selecionadas.append(opcao)
         return ", ".join(selecionadas) if selecionadas else None
-
+ 
     idx_inicial = None
     if valor_previo and valor_previo in pergunta["opcoes"]:
         idx_inicial = pergunta["opcoes"].index(valor_previo)
-
+ 
     return st.radio(
         "Opções:",
         pergunta["opcoes"],
@@ -291,8 +291,8 @@ def renderizar_pergunta(pergunta: dict, indice_bloco: int, indice_pergunta: int,
         key=f"{key_base}_radio",
         label_visibility="collapsed",
     )
-
-
+ 
+ 
 def validar_respostas(respostas: dict[str, str], blocos_ativos: list) -> list[str]:
     faltando = []
     for bloco in blocos_ativos:
@@ -300,24 +300,24 @@ def validar_respostas(respostas: dict[str, str], blocos_ativos: list) -> list[st
             if pergunta["chave"] not in respostas:
                 faltando.append(f"Item {extrair_numero_pergunta(pergunta['chave'])}")
     return faltando
-
-
+ 
+ 
 def calcular_percentual_maturidade(respostas: dict[str, str]) -> int:
     nivel, texto = avaliar_maturidade(respostas)
     inicio = texto.find("(") + 1
     fim = texto.find("%")
     return int(texto[inicio:fim]) if inicio > 0 and fim > inicio else 0
-
-
+ 
+ 
 def exibir_relatorio(respostas: dict[str, str], pdf_bytes: bytes) -> None:
     nivel, _ = avaliar_maturidade(respostas)
     percentual = calcular_percentual_maturidade(respostas)
     cor_texto, _ = CORES_MATURIDADE.get(nivel, ("#1B5E20", "#E8F5E9"))
     data = datetime.now().strftime("%d/%m/%Y às %H:%M")
-
+ 
     st.markdown(f'<div class="relatorio-header"><h2>📊 Relatório de Diagnóstico Estratégico</h2><p>Análise de Viabilidade Emitida em {data}</p></div>', unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
-
+ 
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown(f'<div class="metric-card"><div>NÍVEL DE MATURIDADE</div><div style="font-size:1.6rem;font-weight:700;color:{cor_texto};">{nivel}</div></div>', unsafe_allow_html=True)
@@ -326,19 +326,19 @@ def exibir_relatorio(respostas: dict[str, str], pdf_bytes: bytes) -> None:
     with col3:
         tipo = obter(respostas, "1. Tipo principal do projeto")
         st.markdown(f'<div class="metric-card"><div>SEGMENTO ALVO</div><div style="font-size:1.2rem;font-weight:600;color:#1B4332;">{tipo}</div></div>', unsafe_allow_html=True)
-
+ 
     st.markdown("<br>", unsafe_allow_html=True)
     st.progress(percentual / 100)
-
+ 
     st.markdown("### 📝 Resumo Executivo")
     for linha in gerar_resumo_executivo(respostas):
         if linha.strip():
             st.markdown(linha.strip())
-
+ 
     st.markdown("### 🗺️ Plano de Ação & Próximos Passos")
     for passo in gerar_proximos_passos(respostas):
         st.markdown(f'<div class="passo-item">➔ {passo}</div>', unsafe_allow_html=True)
-
+ 
     st.divider()
     
     st.download_button(
@@ -349,12 +349,12 @@ def exibir_relatorio(respostas: dict[str, str], pdf_bytes: bytes) -> None:
         type="primary",
         use_container_width=True,
     )
-
-
+ 
+ 
 def main() -> None:
     st.set_page_config(page_title="Carbon Diagnosis", page_icon="🌱", layout="wide", initial_sidebar_state="expanded")
     aplicar_estilo()
-
+ 
     # --- NOVO CABEÇALHO ---
     col_logo, col_titulo = st.columns([1, 10])
     with col_logo:
@@ -366,17 +366,17 @@ def main() -> None:
     
     st.divider() # Adiciona uma linha horizontal para separar do resto
     # --- FIM DO CABEÇALHO ---
-
+ 
     # (A partir daqui começa o restante do seu código original...)
-
+ 
     if "respostas_acumuladas" not in st.session_state:
         st.session_state.respostas_acumuladas = {}
-
+ 
     if "latitude_mapa" not in st.session_state:
         st.session_state.latitude_mapa = -23.2641
     if "longitude_mapa" not in st.session_state:
         st.session_state.longitude_mapa = -47.2992
-
+ 
     # 🖥️ OPERAÇÃO DA TELA LATERAL FIXA NO CANTO DIREITO (ESTILO GEMINI PREMIUM)
     with st.sidebar:
         #st.image("logo.png", width=100)
@@ -404,86 +404,61 @@ def main() -> None:
         
         if arquivo_anexado:
             st.success("📎 Documento pronto para análise!")
-
+ 
         if texto_digitado:
-            with st.chat_message("user"):
-                st.markdown(texto_digitado)
-        
-                # Salva o usuário no estado
-                st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
-            
-            with st.sidebar:
-                st.subheader("Análise Atual")
-                if arquivo_anexado:
-                    st.success(f"📎 {arquivo_anexado.name}")
+            # 1. Salva a mensagem do usuário no histórico
+            st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
+ 
+            # 2. Chama a IA e obtém a resposta
+            try:
+                import requests
+                import json
+ 
+                api_key = st.secrets["GEMINI_API_KEY"]
+ 
+                lista_url = f"https://generativelanguage.googleapis.com/v1/models?key={api_key}"
+                response_lista = requests.get(lista_url)
+                data_lista = response_lista.json()
+ 
+                modelos = data_lista.get("models", [])
+                modelo_valido = next((m["name"] for m in modelos if "flash" in m["name"].lower()), None)
+ 
+                if not modelo_valido:
+                    texto_resposta = "Erro: Nenhum modelo 'flash' encontrado. Modelos disponíveis: " + str([m['name'] for m in modelos])
                 else:
-                    st.info("Nenhum doc. anexado.")
-
-        # 2. Segundo: desenhamos TUDO o que está no histórico (o for loop cuida de tudo)
-            for message in st.session_state.historico_chat:
-                with caixa_historico.chat_message(message["role"]):
-                    st.markdown(message["content"])
-
-                with caixa_historico:
-                    with st.chat_message("assistant"):
-                        try:
-                            import requests
-                            import json
-                            
-                            api_key = st.secrets["GEMINI_API_KEY"]
-                            
-                            # 1. Primeiro, pedimos ao Google a lista de modelos disponíveis para a sua chave
-                            lista_url = f"https://generativelanguage.googleapis.com/v1/models?key={api_key}"
-                            response_lista = requests.get(lista_url)
-                            data_lista = response_lista.json()
-                            
-                            # 2. Procuramos na lista algum modelo que seja "flash"
-                            modelos = data_lista.get("models", [])
-                            modelo_valido = next((m["name"] for m in modelos if "flash" in m["name"].lower()), None)
-                            
-                            if not modelo_valido:
-                                st.error("Nenhum modelo 'flash' encontrado. Modelos disponíveis: " + str([m['name'] for m in modelos]))
-                                texto_resposta = "Erro: Modelo não encontrado na lista permitida."
-                            else:
-                                # 3. Usamos o nome exato que o Google nos deu
-                                url = f"https://generativelanguage.googleapis.com/v1/{modelo_valido}:generateContent?key={api_key}"
-                                
-                                headers = {'Content-Type': 'application/json'}
-                                
-                                # Adicionando a instrução de sistema aqui dentro:
-                                payload = {
-                                    "contents": [
-                                        {
-                                            "role": "user",
-                                            "parts": [{"text": "Aja como um Consultor Sênior em Due Diligence de Projetos de Carbono e Travel Designer especializado em operações de alto luxo. Sua comunicação deve ser técnica, direta e estruturada. Rejeite clichês corporativos, não use linguagem robótica e foque estritamente em conformidade legal (Lei 15.042/24), metodologias de certificadoras (Verra/Gold Standard) e viabilidade técnica florestal. Quando analisar documentos (PDFs), extraia dados, cruze com normas regulatórias e aponte riscos específicos."}]
-                                        },
-                                        {
-                                            "role": "user",
-                                            "parts": [{"text": texto_digitado}]
-                                        }
-                                    ],
-                                    "generationConfig": {"temperature": 0.2}
-                                }
-                                response = requests.post(url, headers=headers, json=payload)
-                                data = response.json()
-                                
-                                if "candidates" in data:
-                                    texto_resposta = data["candidates"][0]["content"]["parts"][0]["text"]
-                                else:
-                                    texto_resposta = f"❌ Erro na API: {json.dumps(data.get('error', {}))}"
-                                    
-                        except Exception as e:
-                            texto_resposta = f"❌ Erro crítico: {str(e)}"
-                        
-                        st.markdown(texto_resposta)
-                        
-                        if "❌" not in texto_resposta:
-                            st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
-                            st.rerun () 
-
+                    url = f"https://generativelanguage.googleapis.com/v1/{modelo_valido}:generateContent?key={api_key}"
+                    headers = {'Content-Type': 'application/json'}
+                    payload = {
+                        "contents": [
+                            {
+                                "role": "user",
+                                "parts": [{"text": "Aja como um Consultor Sênior em Due Diligence de Projetos de Carbono e Travel Designer especializado em operações de alto luxo. Sua comunicação deve ser técnica, direta e estruturada. Rejeite clichês corporativos, não use linguagem robótica e foque estritamente em conformidade legal (Lei 15.042/24), metodologias de certificadoras (Verra/Gold Standard) e viabilidade técnica florestal. Quando analisar documentos (PDFs), extraia dados, cruze com normas regulatórias e aponte riscos específicos."}]
+                            },
+                            {
+                                "role": "user",
+                                "parts": [{"text": texto_digitado}]
+                            }
+                        ],
+                        "generationConfig": {"temperature": 0.2}
+                    }
+                    response = requests.post(url, headers=headers, json=payload)
+                    data = response.json()
+ 
+                    if "candidates" in data:
+                        texto_resposta = data["candidates"][0]["content"]["parts"][0]["text"]
+                    else:
+                        texto_resposta = f"❌ Erro na API: {json.dumps(data.get('error', {}))}"
+ 
+            except Exception as e:
+                texto_resposta = f"❌ Erro crítico: {str(e)}"
+ 
+            # 3. Salva a resposta da IA no histórico e reroda para exibir tudo de uma vez
+            st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
+            st.rerun()
+ 
     # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
-
+ 
     template_pdf = gerar_template_pdf()
     c_btn, c_radio = st.columns([1, 2])
     with c_btn:
@@ -494,7 +469,7 @@ def main() -> None:
             "🚀 Estruturação": "✨ Estruturar do zero (Frente 1 — Estruturação)",
             "🔎 Pré-Auditoria": "🔍 Validar ativo existente (Frente 2 — Pré-Auditoria)"
         }
-
+ 
         # O radio mostra o nome limpo
         selecao_usuario = st.radio("Jornada do Projeto:", list(mapeamento.keys()), index=0, horizontal=True)
         
@@ -508,25 +483,25 @@ def main() -> None:
         }
         st.caption(descricoes[selecao_usuario])
     st.divider()
-
+ 
     if "relatorio_gerado" not in st.session_state:
         st.session_state.relatorio_gerado = False
         st.session_state.pdf_data = b""
         st.session_state.respostas_finais = {}
-
+ 
     if "bloco_atual_index" not in st.session_state:
         st.session_state.bloco_atual_index = 0
-
+ 
     if "Frente 1" in jornada:
         # Pega Identificação, Mapeamento, Situação Atual, Potencial, Certificação, Execução, Riscos
         blocos_ativos = [BLOCOS[0], BLOCOS[1], BLOCOS[2], BLOCOS[3], BLOCOS[4], BLOCOS[5], BLOCOS[6]]
     else:
         # Pega Identificação, Mapeamento, Situação Atual, Checklist Docs, Gap Analysis SBCE, Análise do CAR
         blocos_ativos = [BLOCOS[0], BLOCOS[1], BLOCOS[2], BLOCOS[7], BLOCOS[8], BLOCOS[9]]
-
+ 
     if st.session_state.bloco_atual_index >= len(blocos_ativos):
         st.session_state.bloco_atual_index = 0
-
+ 
     # 📊 BARRA DE PROGRESSO EM TEMPO REAL POR PERGUNTA
     # Contamos o total apenas dos blocos de perguntas reais (excluindo o bloco de mapeamento)
     total_perguntas = sum(len(b["perguntas"]) for b in blocos_ativos if b["titulo"] != "Mapeamento")
@@ -536,7 +511,7 @@ def main() -> None:
     st.markdown(f"**Progresso Completo do Diagnóstico: {percentual_preenchido}%** ({respondidas} de {total_perguntas} itens concluídos)")
     st.progress(respondidas / total_perguntas if total_perguntas > 0 else 0.0)
     st.markdown("<br>", unsafe_allow_html=True)
-
+ 
     # 🗺️ MENU DE NAVEGAÇÃO PROGRESSIVO (Linha de passos superior)
     col_passos = st.columns(len(blocos_ativos))
     for idx_passo, b_passo in enumerate(blocos_ativos):
@@ -545,9 +520,9 @@ def main() -> None:
                 st.markdown(f"<div style='text-align:center; border-bottom:3px solid #0071E3; padding-bottom:5px; font-weight:700;'>{b_passo['icone']} {b_passo['titulo']}</div>", unsafe_allow_html=True)
             else:
                 st.markdown(f"<div style='text-align:center; color:#86868B; padding-bottom:8px;'>{b_passo['icone']} {b_passo['titulo']}</div>", unsafe_allow_html=True)
-
+ 
     st.markdown("<br>", unsafe_allow_html=True)
-
+ 
     bloco = blocos_ativos[st.session_state.bloco_atual_index]
     st.markdown(f"#### {bloco['subtitulo']}")
     
@@ -596,7 +571,7 @@ def main() -> None:
                     
                 if idx + 2 < len(perguntas):
                     st.divider()
-
+ 
     # 🎛️ BOTÕES DE NAVEGAÇÃO INTERNA DO CARD
     st.markdown("<br>", unsafe_allow_html=True)
     nav_col1, nav_col2, nav_col3 = st.columns([1, 2, 1])
@@ -635,10 +610,10 @@ def main() -> None:
                         st.session_state.pdf_data = pdf_fallback.output(dest='S').encode('latin-1')
                         
                     st.session_state.relatorio_gerado = True
-
+ 
     if st.session_state.relatorio_gerado and "pdf_data" in st.session_state and st.session_state.pdf_data:
         exibir_relatorio(st.session_state.respostas_finais, st.session_state.pdf_data)
-
-
+ 
+ 
 if __name__ == "__main__":
     main()
