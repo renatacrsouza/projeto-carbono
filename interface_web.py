@@ -453,12 +453,11 @@ def main() -> None:
                                 # Adicionando a instrução de sistema aqui dentro:
                                 payload = {
                                     "system_instruction": {
-                                        "parts": [{"text": "Aja como um Consultor Sênior em Due Diligence de Projetos de Carbono e Travel Designer especializado em operações de alto luxo. Sua comunicação deve ser técnica, direta e estruturada. Rejeite clichês corporativos, não use linguagem robótica e foque estritamente em conformidade legal (Lei 15.042/24), metodologias de certificadoras (Verra/Gold Standard) e viabilidade técnica florestal. Quando analisar documentos (PDFs), extraia dados, cruze com normas regulatórias e aponte riscos específicos. Caso a pergunta seja sobre estruturação de viagens para inspeções técnicas, priorize a logística eficiente e a experiência de campo, mantendo o nível de exigência de um concierge de luxo."}
-                                    },
+                                        "parts": [{"text": "Aja como um Consultor Sênior em Due Diligence de Projetos de Carbono e Travel Designer especializado em operações de alto luxo. Sua comunicação deve ser técnica, direta e estruturada. Rejeite clichês corporativos, não use linguagem robótica e foque estritamente em conformidade legal (Lei 15.042/24), metodologias de certificadoras (Verra/Gold Standard) e viabilidade técnica florestal. Quando analisar documentos (PDFs), extraia dados, cruze com normas regulatórias e aponte riscos específicos. Caso a pergunta seja sobre estruturação de viagens para inspeções técnicas, priorize a logística eficiente e a experiência de campo, mantendo o nível de exigência de um concierge de luxo."}]
+                                                         },
                                     "contents": [{"parts": [{"text": texto_digitado}]}],
                                     "generationConfig": {"temperature": 0.2}
-                                }
-                                
+                                    }
                                 response = requests.post(url, headers=headers, json=payload)
                                 data = response.json()
                                 
