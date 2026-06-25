@@ -419,18 +419,11 @@ def main() -> None:
                     st.info("Nenhum doc. anexado.")
 
             if texto_digitado:
-            # Adiciona ao histórico apenas UMA vez
+            # 1. Adiciona o usuário ao histórico
                 st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
-            
-            # Chama a IA aqui e adiciona a resposta ao histórico também
-            # ... (seu código de chamada da API) ...
-                st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
-
-            # Inicializa a variável com um valor padrão para evitar o UnboundLocalError
+                
+                # 2. Inicializa a variável ANTES de qualquer tentativa de uso
                 texto_resposta = "Processando..."
-            
-            # Roda de novo para limpar o input e exibir o histórico atualizado
-                st.rerun()
 
         # 2. Segundo: desenhamos TUDO o que está no histórico (o for loop cuida de tudo)
             for message in st.session_state.historico_chat:
