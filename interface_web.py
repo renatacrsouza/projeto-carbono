@@ -425,6 +425,9 @@ def main() -> None:
             # Chama a IA aqui e adiciona a resposta ao histórico também
             # ... (seu código de chamada da API) ...
                 st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
+
+            # Inicializa a variável com um valor padrão para evitar o UnboundLocalError
+                texto_resposta = "Processando..."
             
             # Roda de novo para limpar o input e exibir o histórico atualizado
                 st.rerun()
