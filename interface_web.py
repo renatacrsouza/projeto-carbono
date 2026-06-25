@@ -387,7 +387,6 @@ def main() -> None:
         
         if "historico_chat" not in st.session_state:
             st.session_state.historico_chat = [
-                {"role": "system", "content": "Aja como um Consultor Sênior em Due Diligence de Projetos de Carbono e Travel Designer especializado em operações de alto luxo. Sua comunicação deve ser técnica, direta e estruturada. Rejeite clichês corporativos, não use linguagem robótica e foque estritamente em conformidade legal (Lei 15.042/24), metodologias de certificadoras (Verra/Gold Standard) e viabilidade técnica florestal. Quando analisar documentos (PDFs), extraia dados, cruze com normas regulatórias e aponte riscos específicos. Caso a pergunta seja sobre estruturação de viagens para inspeções técnicas, priorize a logística eficiente e a experiência de campo, mantendo o nível de exigência de um concierge de luxo."},
                 {"role": "assistant", "content": "Olá! Sou seu assistente de due diligence. Se não souber como responder alguma pergunta do formulário ao lado esquerdo, ou quiser que eu analise o documento anexo, é só me chamar!"}
             ]
             
@@ -450,7 +449,12 @@ def main() -> None:
                                 url = f"https://generativelanguage.googleapis.com/v1/{modelo_valido}:generateContent?key={api_key}"
                                 
                                 headers = {'Content-Type': 'application/json'}
+                                
+                                # Adicionando a instrução de sistema aqui dentro:
                                 payload = {
+                                    "system_instruction": {
+                                        "parts": [{"text": "Aja como um Consultor Sênior em Due Diligence de Projetos de Carbono e Travel Designer especializado em operações de alto luxo. Sua comunicação deve ser técnica, direta e estruturada. Rejeite clichês corporativos, não use linguagem robótica e foque estritamente em conformidade legal (Lei 15.042/24), metodologias de certificadoras (Verra/Gold Standard) e viabilidade técnica florestal. Quando analisar documentos (PDFs), extraia dados, cruze com normas regulatórias e aponte riscos específicos. Caso a pergunta seja sobre estruturação de viagens para inspeções técnicas, priorize a logística eficiente e a experiência de campo, mantendo o nível de exigência de um concierge de luxo."}
+                                    },
                                     "contents": [{"parts": [{"text": texto_digitado}]}],
                                     "generationConfig": {"temperature": 0.2}
                                 }
