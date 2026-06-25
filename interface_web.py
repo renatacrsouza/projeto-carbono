@@ -395,7 +395,7 @@ def main() -> None:
         with caixa_historico:
             for message in st.session_state.historico_chat:
                 with st.chat_message(message["role"]):
-                    st.write(message["content"])
+                    st.markdown(message["content"])
                     
         texto_digitado = st.chat_input("Ex: O que é adicionalidade? Ou analise o anexo...", key="chat_input_sidebar")
         st.markdown("---")
@@ -406,10 +406,11 @@ def main() -> None:
             st.success("📎 Documento pronto para análise!")
 
         if texto_digitado:
-            with caixa_historico:
-                with st.chat_message("user"):
-                    st.write(texto_digitado)
-            st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
+            with st.chat_message("user"):
+                st.markdown(texto_digitado)
+        
+                # Salva o usuário no estado
+                st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
             
             with st.sidebar:
                 st.subheader("Análise Atual")
