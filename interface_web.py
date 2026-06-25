@@ -419,21 +419,20 @@ def main() -> None:
                     st.info("Nenhum doc. anexado.")
 
             if texto_digitado:
-                with caixa_historico:
-                    with st.chat_message("user"):
-                        st.write(texto_digitado)
+            # Adiciona ao histórico apenas UMA vez
                 st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
+            
+            # Chama a IA aqui e adiciona a resposta ao histórico também
+            # ... (seu código de chamada da API) ...
+                st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
+            
+            # Roda de novo para limpar o input e exibir o histórico atualizado
+                st.rerun()
 
-                for message in st.session_state.historico_chat:
-                    with caixa_historico.chat_message(message["role"]):
-                        st.markdown(message["content"])
-
-                    # 2. SE HOUVER INPUT DO USUÁRIO
-                if texto_digitado:
-                # Mostra o usuário imediatamente
-                    with caixa_historico.chat_message("user"):
-                        st.markdown(texto_digitado)
-                        st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
+        # 2. Segundo: desenhamos TUDO o que está no histórico (o for loop cuida de tudo)
+            for message in st.session_state.historico_chat:
+                with caixa_historico.chat_message(message["role"]):
+                    st.markdown(message["content"])
 
                 with caixa_historico:
                     with st.chat_message("assistant"):
