@@ -432,49 +432,49 @@ def main() -> None:
                             
                             api_key = st.secrets["GEMINI_API_KEY"]
                             
-                            # 1. Busca todos os modelos disponíveis
+                            # 1. Primeiro, pedimos ao Google a lista de modelos disponíveis para a sua chave
                             lista_url = f"https://generativelanguage.googleapis.com/v1/models?key={api_key}"
                             response_lista = requests.get(lista_url)
                             data_lista = response_lista.json()
                             
+                            # 2. Procuramos na lista algum modelo que seja "flash"
                             modelos = data_lista.get("models", [])
-                            
-                            # 2. SELEÇÃO: Pega o primeiro que suporta 'generateContent'
-                            # Isso evita filtrar por nome e ser mais genérico
-                            modelo_valido = None
-                            for m in modelos:
-                                if "generateContent" in m.get("supportedMethods", []):
-                                    modelo_valido = m["name"]
-                                    break
+                            modelo_valido = next((m["name"] for m in modelos if "flash" in m["name"].lower()), None)
                             
                             if not modelo_valido:
-                                st.error(f"Nenhum modelo compatível encontrado. Lista retornada: {data_lista}")
-                                texto_resposta = "Erro: Configuração de modelo indisponível."
+                                st.error("Nenhum modelo 'flash' encontrado. Modelos disponíveis: " + str([m['name'] for m in modelos]))
+                                texto_resposta = "Erro: Modelo não encontrado na lista permitida."
                             else:
-                                # 3. Chama o modelo encontrado
-                                url = f"https://generativelanguage.googleapis.com/v1/{modelo_valido}:generateContent?key={api_key}"
+                                # 3. Usamos o nome exato que o Google nos deu
+                                # 1. Testar o endpoint base
+                                url_lista = f"https://generativelanguage.googleapis.com/v1/models?key={api_key}"
+                                response = requests.get(url_lista)
                                 
+                                st.write("---")
+                                st.write("Status da API:", response.status_code)
+                                st.write("Resposta completa:", response.json())
+                                st.write("---")
+                                
+                                headers = {'Content-Type': 'application/json'}
                                 payload = {
                                     "contents": [{"parts": [{"text": texto_digitado}]}],
                                     "generationConfig": {"temperature": 0.2}
                                 }
                                 
-                                response = requests.post(url, headers={'Content-Type': 'application/json'}, json=payload)
+                                response = requests.post(url_lista, headers=headers, json=payload)
                                 data = response.json()
                                 
                                 if "candidates" in data:
                                     texto_resposta = data["candidates"][0]["content"]["parts"][0]["text"]
                                 else:
                                     texto_resposta = f"❌ Erro na API: {json.dumps(data.get('error', {}))}"
-                        
+                                    
                         except Exception as e:
                             texto_resposta = f"❌ Erro crítico: {str(e)}"
                         
                         st.markdown(texto_resposta)
-                        # IMPORTANTE: Adicionamos ao histórico apenas se houver sucesso
-                        if "❌" not in texto_resposta:
-                            st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
-                            st.rerun()
+                        st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
+                        st.rerun()
 
     # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
