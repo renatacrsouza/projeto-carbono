@@ -419,13 +419,6 @@ def main() -> None:
                 else:
                     st.info("Nenhum doc. anexado.")
 
-            if texto_digitado:
-            # 1. Adiciona o usuário ao histórico
-                st.session_state.historico_chat.append({"role": "user", "content": texto_digitado})
-                
-                # 2. Inicializa a variável ANTES de qualquer tentativa de uso
-                texto_resposta = "Processando..."
-
         # 2. Segundo: desenhamos TUDO o que está no histórico (o for loop cuida de tudo)
             for message in st.session_state.historico_chat:
                 with caixa_historico.chat_message(message["role"]):
