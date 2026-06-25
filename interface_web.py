@@ -428,24 +428,40 @@ def main() -> None:
                     with st.chat_message("assistant"):
                         try:
                             import requests
+                            import json
                             
                             api_key = st.secrets["GEMINI_API_KEY"]
-                            # Usamos o caminho completo 'models/gemini-1.5-flash:generateContent' na v1beta
-                            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
                             
-                            payload = {
-                                "contents": [{"parts": [{"text": texto_digitado}]}],
-                                "generationConfig": {"temperature": 0.2}
-                            }
+                            # 1. Primeiro, pedimos ao Google a lista de modelos disponíveis para a sua chave
+                            lista_url = f"https://generativelanguage.googleapis.com/v1/models?key={api_key}"
+                            response_lista = requests.get(lista_url)
+                            data_lista = response_lista.json()
                             
-                            response = requests.post(url, json=payload)
+                            # 2. Procuramos na lista algum modelo que seja "flash"
+                            modelos = data_lista.get("models", [])
+                            modelo_valido = next((m["name"] for m in modelos if "flash" in m["name"].lower()), None)
                             
-                            if response.status_code == 200:
-                                data = response.json()
-                                texto_resposta = data["candidates"][0]["content"]["parts"][0]["text"]
+                            if not modelo_valido:
+                                st.error("Nenhum modelo 'flash' encontrado. Modelos disponíveis: " + str([m['name'] for m in modelos]))
+                                texto_resposta = "Erro: Modelo não encontrado na lista permitida."
                             else:
-                                texto_resposta = f"❌ Erro {response.status_code}: {response.text}"
+                                # 3. Usamos o nome exato que o Google nos deu
+                                url = f"https://generativelanguage.googleapis.com/v1/{modelo_valido}:generateContent?key={api_key}"
                                 
+                                headers = {'Content-Type': 'application/json'}
+                                payload = {
+                                    "contents": [{"parts": [{"text": texto_digitado}]}],
+                                    "generationConfig": {"temperature": 0.2}
+                                }
+                                
+                                response = requests.post(url, headers=headers, json=payload)
+                                data = response.json()
+                                
+                                if "candidates" in data:
+                                    texto_resposta = data["candidates"][0]["content"]["parts"][0]["text"]
+                                else:
+                                    texto_resposta = f"❌ Erro na API: {json.dumps(data.get('error', {}))}"
+                                    
                         except Exception as e:
                             texto_resposta = f"❌ Erro crítico: {str(e)}"
                         
