@@ -428,44 +428,28 @@ def main() -> None:
                     with st.chat_message("assistant"):
                         try:
                             import requests
-                            import json
                             
                             api_key = st.secrets["GEMINI_API_KEY"]
+                            # Usando o nome direto, sem listar modelos, pois este é o padrão da API v1
+                            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
                             
-                            # 1. Primeiro, pedimos ao Google a lista de modelos disponíveis para a sua chave
-                            lista_url = f"https://generativelanguage.googleapis.com/v1/models?key={api_key}"
-                            response_lista = requests.get(lista_url)
-                            data_lista = response_lista.json()
+                            payload = {
+                                "contents": [{"parts": [{"text": texto_digitado}]}]
+                            }
                             
-                            # 2. Procuramos na lista algum modelo que seja "flash"
-                            modelos = data_lista.get("models", [])
-                            modelo_valido = next((m["name"] for m in modelos if "flash" in m["name"].lower()), None)
+                            response = requests.post(url, json=payload)
                             
-                            if not modelo_valido:
-                                st.error("Nenhum modelo 'flash' encontrado. Modelos disponíveis: " + str([m['name'] for m in modelos]))
-                                texto_resposta = "Erro: Modelo não encontrado na lista permitida."
-                            else:
-                                # 3. Usamos o nome exato que o Google nos deu
-                                url = f"https://generativelanguage.googleapis.com/v1/{modelo_valido}:generateContent?key={api_key}"
-                                
-                                headers = {'Content-Type': 'application/json'}
-                                payload = {
-                                    "contents": [{"parts": [{"text": texto_digitado}]}],
-                                    "generationConfig": {"temperature": 0.2}
-                                }
-                                
-                                response = requests.post(url, headers=headers, json=payload)
+                            if response.status_code == 200:
                                 data = response.json()
+                                texto_resposta = data["candidates"][0]["content"]["parts"][0]["text"]
+                            else:
+                                # Isso vai te mostrar o erro exato do Google
+                                texto_resposta = f"❌ Erro {response.status_code}: {response.text}"
                                 
-                                if "candidates" in data:
-                                    texto_resposta = data["candidates"][0]["content"]["parts"][0]["text"]
-                                else:
-                                    texto_resposta = f"❌ Erro na API: {json.dumps(data.get('error', {}))}"
-                                    
                         except Exception as e:
                             texto_resposta = f"❌ Erro crítico: {str(e)}"
                         
-                        
+                        st.markdown(texto_resposta)
                         st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
                         st.rerun()
 
