@@ -446,14 +446,7 @@ def main() -> None:
                                 texto_resposta = "Erro: Modelo não encontrado na lista permitida."
                             else:
                                 # 3. Usamos o nome exato que o Google nos deu
-                                # 1. Testar o endpoint base
-                                url_lista = f"https://generativelanguage.googleapis.com/v1/models?key={api_key}"
-                                response = requests.get(url_lista)
-                                
-                                st.write("---")
-                                st.write("Status da API:", response.status_code)
-                                st.write("Resposta completa:", response.json())
-                                st.write("---")
+                                url = f"https://generativelanguage.googleapis.com/v1/{modelo_valido}:generateContent?key={api_key}"
                                 
                                 headers = {'Content-Type': 'application/json'}
                                 payload = {
@@ -461,7 +454,7 @@ def main() -> None:
                                     "generationConfig": {"temperature": 0.2}
                                 }
                                 
-                                response = requests.post(url_lista, headers=headers, json=payload)
+                                response = requests.post(url, headers=headers, json=payload)
                                 data = response.json()
                                 
                                 if "candidates" in data:
@@ -472,7 +465,7 @@ def main() -> None:
                         except Exception as e:
                             texto_resposta = f"❌ Erro crítico: {str(e)}"
                         
-                        st.markdown(texto_resposta)
+                        
                         st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
                         st.rerun()
 
