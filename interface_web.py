@@ -430,8 +430,8 @@ def main() -> None:
                             import requests
                             
                             api_key = st.secrets["GEMINI_API_KEY"]
-                            # Trocamos para 'gemini-pro', que é o padrão universal das chaves de API
-                            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={api_key}"
+                            # Tente este endpoint específico, é o mais comum para chaves novas
+                            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
                             
                             payload = {
                                 "contents": [{"parts": [{"text": texto_digitado}]}]
@@ -443,13 +443,15 @@ def main() -> None:
                                 data = response.json()
                                 texto_resposta = data["candidates"][0]["content"]["parts"][0]["text"]
                             else:
-                                texto_resposta = f"❌ Erro {response.status_code}: {response.text}"
+                                texto_resposta = f"❌ Erro HTTP {response.status_code}: {response.text}"
                                 
                         except Exception as e:
-                            texto_resposta = f"❌ Erro crítico: {str(e)}"
+                            texto_resposta = f"❌ Erro crítico de sistema: {str(e)}"
                         
+                        # Exibe a resposta ou o erro detalhado
                         st.markdown(texto_resposta)
                         
+                        # Adiciona ao histórico apenas se for uma resposta válida (sem o "❌")
                         if "❌" not in texto_resposta:
                             st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
                             st.rerun()
