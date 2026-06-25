@@ -469,7 +469,6 @@ def main() -> None:
                         
                         if "❌" not in texto_resposta:
                             st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
-                            st.rerun()
 
     # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
