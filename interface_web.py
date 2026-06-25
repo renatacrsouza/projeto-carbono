@@ -431,7 +431,8 @@ def main() -> None:
                             import json
                             
                             api_key = st.secrets["GEMINI_API_KEY"]
-                            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                            # Alterado de 'v1beta' para 'v1' e adicionado 'models/' antes do nome do modelo
+                            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
                             
                             headers = {'Content-Type': 'application/json'}
                             payload = {
@@ -439,14 +440,14 @@ def main() -> None:
                                 "generationConfig": {"temperature": 0.2}
                             }
                             
-                            # Chamada via API REST (ignora bibliotecas e erros de versão)
                             response = requests.post(url, headers=headers, json=payload)
                             data = response.json()
                             
                             if "candidates" in data:
                                 texto_resposta = data["candidates"][0]["content"]["parts"][0]["text"]
                             else:
-                                texto_resposta = f"❌ Erro na API: {data.get('error', {}).get('message', 'Erro desconhecido')}"
+                                # Isso vai te mostrar exatamente o erro se ainda houver algum
+                                texto_resposta = f"❌ Erro na API: {json.dumps(data.get('error', {}))}"
                                 
                         except Exception as e:
                             texto_resposta = f"❌ Erro crítico: {str(e)}"
