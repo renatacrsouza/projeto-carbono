@@ -430,8 +430,8 @@ def main() -> None:
                             import requests
                             
                             api_key = st.secrets["GEMINI_API_KEY"]
-                            # Usando o nome direto, sem listar modelos, pois este é o padrão da API v1
-                            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
+                            # Trocamos para 'gemini-pro', que é o padrão universal das chaves de API
+                            url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={api_key}"
                             
                             payload = {
                                 "contents": [{"parts": [{"text": texto_digitado}]}]
@@ -443,15 +443,16 @@ def main() -> None:
                                 data = response.json()
                                 texto_resposta = data["candidates"][0]["content"]["parts"][0]["text"]
                             else:
-                                # Isso vai te mostrar o erro exato do Google
                                 texto_resposta = f"❌ Erro {response.status_code}: {response.text}"
                                 
                         except Exception as e:
                             texto_resposta = f"❌ Erro crítico: {str(e)}"
                         
                         st.markdown(texto_resposta)
-                        st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
-                        st.rerun()
+                        
+                        if "❌" not in texto_resposta:
+                            st.session_state.historico_chat.append({"role": "assistant", "content": texto_resposta})
+                            st.rerun()
 
     # ── Conteúdo Principal (Lado Esquerdo) ───────────────────────────────────
     st.markdown('<div class="main-header"><h1>🌱 Diagnóstico de Projetos de Carbono</h1><p>Plataforma inteligente de avaliação e due diligence para os mercados voluntário e regulado (SBCE)</p></div>', unsafe_allow_html=True)
