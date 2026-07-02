@@ -9,7 +9,7 @@ from fpdf import FPDF
 from google import genai
 from google.genai import types
 import pandas as pd
- 
+
 from diagnostico import (
     avaliar_maturidade,
     gerar_proximos_passos,
@@ -413,6 +413,13 @@ def main() -> None:
             try:
                 import requests
                 import json
+
+                system_instruction = """
+                Você é um Consultor Sênior em Due Diligence de Carbono (Lei 15.042/24 e normas Verra/Gold Standard) e Travel Designer de Alto Luxo. 
+                Sua análise deve ser: Técnica, orientada a riscos (Red Flags), direta e sem clichês. 
+                Seu foco: Validar conformidade legal, viabilidade técnica florestal e logística de inspeção de elite. 
+                Se o usuário fornecer documentos, extraia dados e cruze com normas regulatórias.
+                """
  
                 api_key = st.secrets["GEMINI_API_KEY"]
  
@@ -432,7 +439,7 @@ def main() -> None:
                         "contents": [
                             {
                                 "role": "user",
-                                "parts": [{"text": "Aja como um Consultor Sênior em Due Diligence de Projetos de Carbono e Travel Designer especializado em operações de alto luxo. Sua comunicação deve ser técnica, direta e estruturada. Rejeite clichês corporativos, não use linguagem robótica e foque estritamente em conformidade legal (Lei 15.042/24), metodologias de certificadoras (Verra/Gold Standard) e viabilidade técnica florestal. Quando analisar documentos (PDFs), extraia dados, cruze com normas regulatórias e aponte riscos específicos."}]
+                                "parts": [{"text": system_instruction}]
                             },
                             {
                                 "role": "user",
